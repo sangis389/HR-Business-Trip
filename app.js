@@ -588,7 +588,6 @@ function viewEmployees() {
     <div class="flex center gap-3 wrap mt-2">
       <h2 style="margin:0; font-size:16px;">VN Office 인원 <span style="color:#94a3b8; font-size:13px;">(${filtered.length} / ${state.employees.length})</span></h2>
       <div class="ml-auto flex gap-2">
-        <button class="btn btn-primary" onclick="editEmployee()">+ 신규 등록</button>
         <button class="btn btn-outline" onclick="exportSheet('employees')">📤 엑셀 내보내기</button>
       </div>
     </div>
@@ -606,7 +605,7 @@ function viewEmployees() {
       <div class="table-wrap"><table>
         <thead><tr>
           <th>Person ID</th><th>이름</th><th>부서</th><th>직책</th><th>성별</th>
-          <th class="right">잔여 연차</th><th class="right">액션</th>
+          <th class="right">잔여 연차</th>
         </tr></thead>
         <tbody>
           ${filtered.map(e => `
@@ -620,10 +619,6 @@ function viewEmployees() {
               <td>${escHTML(e.position || "—")}</td>
               <td>${escHTML(e.gender || "—")}</td>
               <td class="right">${e.remaining_leave} / ${e.annual_leave}일</td>
-              <td class="right">
-                <span class="link" onclick="editEmployee(${e.id})">수정</span>
-                <span class="link" style="color:#dc2626; margin-left:8px;" onclick="deleteEmployee(${e.id})">삭제</span>
-              </td>
             </tr>
           `).join("")}
         </tbody>
@@ -632,45 +627,7 @@ function viewEmployees() {
   `;
 }
 
-function editEmployee(id) {
-  const emp = id ? state.employees.find(e => e.id === id)
-                 : { person_id:"", name:"", department:"Office/SCM", position:"", gender:"", is_scm:true, annual_leave:15, remaining_leave:15 };
-  const isNew = !id;
-  const depts = [...new Set([...state.employees.map(e => e.department), "Office/SCM"])].filter(Boolean);
-  showModal(isNew ? "인원 등록" : "인원 수정", `
-    <div><label class="field-label">Person ID</label><input id="f_pid" value="${escHTML(emp.person_id || "")}" /></div>
-    <div><label class="field-label">이름 *</label><input id="f_name" value="${escHTML(emp.name || "")}" /></div>
-    <div class="grid-2">
-      <div><label class="field-label">부서</label>
-        <select id="f_dept">${depts.map(d => `<option ${emp.department === d ? "selected" : ""}>${escHTML(d)}</option>`).join("")}</select></div>
-      <div><label class="field-label">직책</label><input id="f_pos" value="${escHTML(emp.position || "")}" /></div>
-    </div>
-    <div class="grid-3">
-      <div><label class="field-label">성별</label><input id="f_gender" value="${escHTML(emp.gender || "")}" /></div>
-      <div><label class="field-label">총 연차</label><input id="f_annual" type="number" value="${emp.annual_leave || 15}" /></div>
-      <div><label class="field-label">잔여 연차</label><input id="f_remaining" type="number" step="0.5" value="${emp.remaining_leave || 15}" /></div>
-    </div>
-  `, () => {
-    const dept = val("f_dept");
-    const data = {
-      person_id: val("f_pid"), name: val("f_name"), department: dept,
-      position: val("f_pos"), gender: val("f_gender"),
-      is_scm: dept.toUpperCase().includes("SCM"),
-      annual_leave: +val("f_annual"), remaining_leave: +val("f_remaining"),
-    };
-    if (!data.name) { alert("이름은 필수입니다."); return false; }
-    if (isNew) {
-      const nextId = state.employees.length ? Math.max(...state.employees.map(e => e.id)) + 1 : 1;
-      state.employees.push({ id: nextId, ...data });
-    } else Object.assign(emp, data);
-    save(); render(); return true;
-  });
-}
-function deleteEmployee(id) {
-  if (!confirm("삭제하시겠습니까?")) return;
-  state.employees = state.employees.filter(e => e.id !== id);
-  save(); render();
-}
+// editEmployee / deleteEmployee 제거됨 (수기 입력 기능 제거)
 
 // ==========================================================================
 // View: Attendance
@@ -696,7 +653,6 @@ function viewAttendance() {
     <div class="flex center gap-3 wrap">
       <h2 style="margin:0; font-size:16px;">근태 <span style="color:#94a3b8; font-size:13px;">(${filtered.length.toLocaleString()} / ${state.attendance.length.toLocaleString()})</span></h2>
       <div class="ml-auto flex gap-2">
-        <button class="btn btn-primary" onclick="editAttendance()">+ 기록 추가</button>
         <button class="btn btn-outline" onclick="exportSheet('attendance')">📤 필터 결과 내보내기</button>
       </div>
     </div>
@@ -724,7 +680,7 @@ function viewAttendance() {
       <div class="table-wrap"><table>
         <thead><tr>
           <th>날짜</th><th>이름</th><th>부서</th><th>출근</th><th>퇴근</th>
-          <th class="right">지각(분)</th><th>상태</th><th class="right">액션</th>
+          <th class="right">지각(분)</th><th>상태</th>
         </tr></thead>
         <tbody>
           ${paginated.map(a => `
@@ -739,10 +695,6 @@ function viewAttendance() {
               <td>${a.check_out || "—"}</td>
               <td class="right ${a.late_minutes > 0 ? "text-late" : ""}">${a.late_minutes || "—"}</td>
               <td><span class="badge b-${a.status === "LATE" ? "warn" : a.status === "ABSENT" ? "danger" : "success"}">${a.status}</span></td>
-              <td class="right">
-                <span class="link" onclick="editAttendance(${a.id})">수정</span>
-                <span class="link" style="color:#dc2626; margin-left:8px;" onclick="deleteAttendance(${a.id})">삭제</span>
-              </td>
             </tr>
           `).join("")}
         </tbody>
@@ -784,46 +736,7 @@ function handleDrop(e, kind) {
 function handleAttFile(e) { if (e.target.files.length) importAttendance(e.target.files[0]); }
 function handleTripFile(e) { if (e.target.files.length) importTripPlan(e.target.files[0]); }
 
-function editAttendance(id) {
-  const rec = id ? state.attendance.find(a => a.id === id)
-                 : { person_id:"", name:"", department:"", date:new Date().toISOString().slice(0,10), check_in:"09:00", check_out:"18:00", status:"NORMAL", late_minutes:0, note:"" };
-  const isNew = !id;
-  const empOpts = state.employees.map(e => `<option value="${escHTML(e.person_id)}" data-name="${escHTML(e.name)}" data-dept="${escHTML(e.department)}" ${rec.person_id === e.person_id ? "selected" : ""}>${escHTML(e.name)} · ${escHTML(e.department)}</option>`).join("");
-  showModal(isNew ? "근태 기록 추가" : "근태 기록 수정", `
-    <div><label class="field-label">직원 *</label><select id="f_pid_sel"><option value="">선택</option>${empOpts}</select></div>
-    <div><label class="field-label">날짜 *</label><input id="f_date" type="date" value="${rec.date}" /></div>
-    <div class="grid-2">
-      <div><label class="field-label">출근</label><input id="f_in" type="time" value="${rec.check_in}" /></div>
-      <div><label class="field-label">퇴근</label><input id="f_out" type="time" value="${rec.check_out}" /></div>
-    </div>
-    <div><label class="field-label">상태</label>
-      <select id="f_status">${["NORMAL","LATE","ABSENT","REMOTE","BUSINESS_TRIP","HOLIDAY"].map(s => `<option ${rec.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
-    <div><label class="field-label">비고</label><textarea id="f_note">${escHTML(rec.note || "")}</textarea></div>
-  `, () => {
-    const sel = document.getElementById("f_pid_sel");
-    const opt = sel.options[sel.selectedIndex];
-    const pid = sel.value;
-    if (!pid) { alert("직원을 선택하세요."); return false; }
-    const data = {
-      person_id: pid, name: opt.dataset.name, department: opt.dataset.dept,
-      date: val("f_date"), check_in: val("f_in"), check_out: val("f_out"),
-      status: val("f_status"), note: val("f_note"),
-    };
-    const [h,m] = data.check_in.split(":").map(Number);
-    data.late_minutes = Math.max(0, (h*60+m) - (9*60));
-    if (data.status === "NORMAL" && data.late_minutes > 0) data.status = "LATE";
-    if (isNew) {
-      const nextId = state.attendance.length ? Math.max(...state.attendance.map(a => a.id)) + 1 : 1;
-      state.attendance.push({ id: nextId, ...data });
-    } else Object.assign(rec, data);
-    save(); render(); return true;
-  });
-}
-function deleteAttendance(id) {
-  if (!confirm("삭제하시겠습니까?")) return;
-  state.attendance = state.attendance.filter(a => a.id !== id);
-  save(); render();
-}
+// editAttendance / deleteAttendance 제거됨 (수기 입력 기능 제거)
 
 // ==========================================================================
 // View: Trips
@@ -835,7 +748,6 @@ function viewTrips() {
     <div class="flex center gap-3 wrap">
       <h2 style="margin:0; font-size:16px;">SCM 출장 <span style="color:#94a3b8; font-size:13px;">(${state.trips.length}건 · 대상 ${scmCount}명)</span></h2>
       <div class="ml-auto flex gap-2">
-        <button class="btn btn-primary" onclick="editTrip()">+ 신규 출장</button>
         <button class="btn btn-outline" onclick="exportSheet('trips')">📤 엑셀 내보내기</button>
       </div>
     </div>
@@ -888,54 +800,49 @@ function viewTrips() {
   `;
 }
 
+// Read-only trip detail viewer (수기 편집 기능 제거됨)
 function editTrip(id) {
-  const trip = id ? state.trips.find(t => t.id === id)
-                  : { title:"", employee:"", destination:"", start_date:"", end_date:"", purpose:"SOURCING", status:"DRAFT", cost_planned:0, cost_actual:0, currency:"USD", partners:[], itinerary:[], outcome:"", roi:null, notes:"" };
-  const isNew = !id;
-  const scmEmps = state.employees.filter(e => e.is_scm);
-  if (scmEmps.length === 0) { alert("SCM 부서 인원이 없습니다."); return; }
-  const empOpts = scmEmps.map(e => `<option ${trip.employee === e.name ? "selected" : ""}>${escHTML(e.name)}</option>`).join("");
+  const trip = state.trips.find(t => t.id === id);
+  if (!trip) return;
 
   const partners = trip.partners || [];
   const itinerary = trip.itinerary || [];
   const cur = trip.currency || "USD";
 
-  showModal(isNew ? "SCM 출장 신규 등록" : `SCM 출장 상세 #${trip.id}`, `
-    <div><label class="field-label">제목 *</label><input id="f_title" value="${escHTML(trip.title || "")}" /></div>
-    <div class="grid-2">
-      <div><label class="field-label">담당자 (SCM만) *</label><select id="f_emp"><option value="">선택</option>${empOpts}</select></div>
-      <div><label class="field-label">목적지</label><input id="f_dest" value="${escHTML(trip.destination || "")}" /></div>
-    </div>
-    <div class="grid-2">
-      <div><label class="field-label">시작일</label><input id="f_start" type="date" value="${trip.start_date || ""}" /></div>
-      <div><label class="field-label">종료일</label><input id="f_end" type="date" value="${trip.end_date || ""}" /></div>
-    </div>
-    <div class="grid-2">
-      <div><label class="field-label">목적</label><select id="f_purpose">${["SOURCING","CONTRACT","QA_VISIT","EVENT","CONFERENCE","INTERNAL"].map(p => `<option ${trip.purpose===p?"selected":""}>${p}</option>`).join("")}</select></div>
-      <div><label class="field-label">상태</label><select id="f_status">${["DRAFT","REQUESTED","APPROVED","IN_PROGRESS","COMPLETED","CANCELLED"].map(s => `<option ${trip.status===s?"selected":""}>${s}</option>`).join("")}</select></div>
-    </div>
-    <div class="grid-3">
-      <div><label class="field-label">통화</label><select id="f_cur">${["USD","VND","KRW","THB","SGD","IDR","JPY","EUR"].map(c => `<option ${cur===c?"selected":""}>${c}</option>`).join("")}</select></div>
-      <div><label class="field-label">예산</label><input id="f_planned" type="number" value="${trip.cost_planned || 0}" /></div>
-      <div><label class="field-label">실지출</label><input id="f_actual" type="number" value="${trip.cost_actual || 0}" /></div>
-    </div>
+  const row = (label, value) => `
+    <div style="display:flex; padding:6px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
+      <div style="width:110px; color:#64748b; font-size:12px;">${label}</div>
+      <div style="flex:1;">${value}</div>
+    </div>`;
+
+  showModalReadOnly(`SCM 출장 상세 #${trip.id}`, `
+    <div style="font-size:16px; font-weight:600; margin-bottom:10px;">${escHTML(trip.title || "—")}</div>
+
+    ${row("담당자", escHTML(trip.employee || "—"))}
+    ${row("목적지", escHTML(trip.destination || "—"))}
+    ${row("기간", `${trip.start_date || "—"} ~ ${trip.end_date || "—"}`)}
+    ${row("목적", escHTML(trip.purpose || "—"))}
+    ${row("상태", `<span class="badge b-primary">${escHTML(trip.status || "—")}</span>`)}
+    ${row("예산", `${curSym(cur)}${fmt(trip.cost_planned)} ${cur}`)}
+    ${row("실지출", `${curSym(cur)}${fmt(trip.cost_actual)} ${cur}`)}
+    ${trip.roi != null ? row("실제 ROI", `<b>${trip.roi.toFixed(1)}x</b>`) : ""}
 
     ${itinerary.length > 0 ? `
-      <div class="card" style="padding:10px; background:#f8fafc;">
-        <div style="font-size:11px; font-weight:600;">🗓️ 일정</div>
-        <div style="font-size:11px; color:#475569; margin-top:6px;">
-          ${itinerary.map(d => `<div><b>${escHTML(d.day)}</b> · ${escHTML(d.note)}</div>`).join("")}
+      <div class="card" style="padding:10px; background:#f8fafc; margin-top:14px;">
+        <div style="font-size:11px; font-weight:600; margin-bottom:6px;">🗓️ 일정</div>
+        <div style="font-size:12px; color:#475569;">
+          ${itinerary.map(d => `<div style="padding:2px 0;"><b>${escHTML(d.day)}</b> · ${escHTML(d.note)}</div>`).join("")}
         </div>
       </div>
     ` : ""}
 
     ${partners.length > 0 ? `
-      <div>
-        <div style="font-size:11px; font-weight:600; margin-bottom:6px;">🏨 방문 파트너 (${partners.length}) · ✓ = 방문 완료</div>
+      <div style="margin-top:14px;">
+        <div style="font-size:11px; font-weight:600; margin-bottom:6px;">🏨 방문 파트너 (${partners.length})</div>
         <div class="partners-list">
-          ${partners.map((p, i) => `
+          ${partners.map(p => `
             <div class="partner-row">
-              <input type="checkbox" ${p.visited ? "checked" : ""} onchange="togglePartner(${trip.id||0}, ${i})" />
+              <div style="width:20px; text-align:center; font-size:14px;">${p.visited ? "✓" : "·"}</div>
               <div style="flex:1;">
                 <div class="partner-name">${escHTML(p.name)}</div>
                 <div class="partner-meta">${escHTML(p.district || "—")}${p.bookings_2026 ? ` · YTD ${p.bookings_2026} 예약` : ""}</div>
@@ -947,40 +854,38 @@ function editTrip(id) {
       </div>
     ` : ""}
 
-    <div style="border-top:1px solid #e2e8f0; padding-top:12px;">
-      <div style="font-size:11px; font-weight:600; margin-bottom:6px;">📋 출장 결과</div>
-      <div><label class="field-label">결과 요약</label><textarea id="f_outcome" placeholder="계약 체결, 특별 요금 확보 등">${escHTML(trip.outcome || "")}</textarea></div>
-      <div class="mt-2"><label class="field-label">실제 ROI</label><input id="f_roi" type="number" step="0.1" value="${trip.roi || ""}" placeholder="예: 3.5" /></div>
-      <div class="mt-2"><label class="field-label">추가 노트</label><textarea id="f_notes">${escHTML(trip.notes || "")}</textarea></div>
-    </div>
-  `, () => {
-    const data = {
-      title: val("f_title"), employee: val("f_emp"), destination: val("f_dest"),
-      start_date: val("f_start"), end_date: val("f_end"),
-      purpose: val("f_purpose"), status: val("f_status"), currency: val("f_cur"),
-      cost_planned: +val("f_planned"), cost_actual: +val("f_actual"),
-      outcome: val("f_outcome"), roi: val("f_roi") ? +val("f_roi") : null, notes: val("f_notes"),
-      partners, itinerary,
-    };
-    if (!data.title) { alert("제목은 필수입니다."); return false; }
-    if (!data.employee) { alert("SCM 담당자를 선택하세요."); return false; }
-    if (isNew) {
-      const nextId = state.trips.length ? Math.max(...state.trips.map(t => t.id)) + 1 : 1;
-      state.trips.push({ id: nextId, ...data });
-    } else Object.assign(trip, data);
-    save(); render(); return true;
-  }, id ? `<button class="btn btn-danger" onclick="deleteTrip(${id})">삭제</button>` : "");
+    ${trip.outcome ? `
+      <div style="border-top:1px solid #e2e8f0; padding-top:12px; margin-top:14px;">
+        <div style="font-size:11px; font-weight:600; margin-bottom:6px;">📋 출장 결과</div>
+        <div style="font-size:13px; color:#475569; white-space:pre-wrap;">${escHTML(trip.outcome)}</div>
+      </div>
+    ` : ""}
+
+    ${trip.notes ? `
+      <div style="margin-top:12px;">
+        <div style="font-size:11px; font-weight:600; margin-bottom:6px;">📝 노트</div>
+        <div style="font-size:13px; color:#475569; white-space:pre-wrap;">${escHTML(trip.notes)}</div>
+      </div>
+    ` : ""}
+  `);
 }
-function togglePartner(tripId, idx) {
-  const trip = state.trips.find(t => t.id === tripId);
-  if (!trip || !trip.partners) return;
-  trip.partners[idx].visited = !trip.partners[idx].visited;
-  save();
-}
-function deleteTrip(id) {
-  if (!confirm("삭제하시겠습니까?")) return;
-  state.trips = state.trips.filter(t => t.id !== id);
-  save(); closeModal(); render();
+
+// Read-only modal (닫기 버튼만 있는 뷰 전용 모달)
+function showModalReadOnly(title, body) {
+  const html = `
+    <div class="modal-backdrop" id="modal">
+      <div class="modal">
+        <div class="modal-head">
+          <div>${title}</div>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">${body}</div>
+        <div class="modal-foot">
+          <button class="btn btn-outline" onclick="closeModal()">닫기</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML("beforeend", html);
 }
 
 // ==========================================================================
