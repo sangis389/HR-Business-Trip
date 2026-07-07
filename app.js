@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v8";  // v8: 4명 닉네임 추가 (Holden, Mike, Vanessa, DK)
+const STORAGE_KEY = "vn-office-v9";  // v9: Office/PD 부서 신설 · 4명 이동
 const PAGE_SIZE = 50;
 
 // ==========================================================================
