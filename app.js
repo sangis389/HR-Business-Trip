@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v23";  // v23: Yoo SangKyu → Sang Yoo 리네임
+const STORAGE_KEY = "vn-office-v24";  // v24: SCM 출장 필터 chip 카운트 숫자 제거
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1174,16 +1174,14 @@ function viewTrips() {
       <div class="chip-label">담당자 필터</div>
       <div class="chips">
         ${tripEmployees.map(emp => {
-          const cnt = emp === "ALL" ? state.trips.length : state.trips.filter(t => t.employee === emp).length;
           const label = emp === "ALL" ? "전체" : nickOnly(emp);
-          return `<button class="chip ${state.filter_trip_employee === emp ? "active" : ""}" onclick='setTripEmpFilter(${JSON.stringify(emp)})'>${escHTML(label)} (${cnt})</button>`;
+          return `<button class="chip ${state.filter_trip_employee === emp ? "active" : ""}" onclick='setTripEmpFilter(${JSON.stringify(emp)})'>${escHTML(label)}</button>`;
         }).join("")}
       </div>
       <div class="chip-label mt-2">월 필터 (출장 시작월 기준)</div>
       <div class="chips">
         ${monthTabs.map(m => {
-          const cnt = m === "ALL" ? state.trips.length : state.trips.filter(t => (t.start_date || "").startsWith(m)).length;
-          return `<button class="chip ${state.filter_trip_month === m ? "active" : ""}" onclick="state.filter_trip_month='${m}'; render();">${m === "ALL" ? "전체" : m} (${cnt})</button>`;
+          return `<button class="chip ${state.filter_trip_month === m ? "active" : ""}" onclick="state.filter_trip_month='${m}'; render();">${m === "ALL" ? "전체" : m}</button>`;
         }).join("")}
       </div>
     </div>
