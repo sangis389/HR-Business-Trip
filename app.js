@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v22";  // v22: 담당자 영문명 표시 + 매트릭스에 방문 지역 표기
+const STORAGE_KEY = "vn-office-v23";  // v23: Yoo SangKyu → Sang Yoo 리네임
 const PAGE_SIZE = 50;
 
 // ==========================================================================

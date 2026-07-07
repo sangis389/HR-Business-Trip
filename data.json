@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v21",
+    "version": "v23",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-07T16:30:00Z"
+    "updated": "2026-07-07T17:00:00Z"
   },
   "employees": [
     {
@@ -484,7 +484,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "position": "SCM Head",
       "gender": "Male",
@@ -785,7 +785,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-02",
       "check_in": "",
@@ -1277,7 +1277,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-05",
       "check_in": "07:10",
@@ -1769,7 +1769,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-06",
       "check_in": "07:12",
@@ -2261,7 +2261,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-07",
       "check_in": "07:09",
@@ -2753,7 +2753,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-08",
       "check_in": "07:10",
@@ -3245,7 +3245,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-09",
       "check_in": "07:10",
@@ -3737,7 +3737,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-12",
       "check_in": "07:13",
@@ -4229,7 +4229,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-13",
       "check_in": "07:09",
@@ -4721,7 +4721,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-14",
       "check_in": "07:10",
@@ -5213,7 +5213,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-15",
       "check_in": "07:12",
@@ -5705,7 +5705,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-16",
       "check_in": "07:14",
@@ -6197,7 +6197,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-19",
       "check_in": "07:07",
@@ -6689,7 +6689,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-20",
       "check_in": "07:20",
@@ -7181,7 +7181,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-21",
       "check_in": "",
@@ -7673,7 +7673,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-22",
       "check_in": "",
@@ -8165,7 +8165,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-23",
       "check_in": "",
@@ -8657,7 +8657,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-26",
       "check_in": "07:09",
@@ -9149,7 +9149,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-27",
       "check_in": "07:21",
@@ -9641,7 +9641,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-28",
       "check_in": "07:14",
@@ -10133,7 +10133,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-29",
       "check_in": "07:13",
@@ -10625,7 +10625,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-01-30",
       "check_in": "07:07",
@@ -11117,7 +11117,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-02",
       "check_in": "07:24",
@@ -11633,7 +11633,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-03",
       "check_in": "07:26",
@@ -12149,7 +12149,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-04",
       "check_in": "",
@@ -12665,7 +12665,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-05",
       "check_in": "",
@@ -13181,7 +13181,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-06",
       "check_in": "",
@@ -13697,7 +13697,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-09",
       "check_in": "07:19",
@@ -14213,7 +14213,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-10",
       "check_in": "",
@@ -14729,7 +14729,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-11",
       "check_in": "",
@@ -15245,7 +15245,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-12",
       "check_in": "07:16",
@@ -15761,7 +15761,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-13",
       "check_in": "07:24",
@@ -16277,7 +16277,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-16",
       "check_in": "07:17",
@@ -16793,7 +16793,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-17",
       "check_in": "07:17",
@@ -17309,7 +17309,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-18",
       "check_in": "07:15",
@@ -17825,7 +17825,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-19",
       "check_in": "07:20",
@@ -18341,7 +18341,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-20",
       "check_in": "",
@@ -18857,7 +18857,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-23",
       "check_in": "07:15",
@@ -19373,7 +19373,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-24",
       "check_in": "07:17",
@@ -19889,7 +19889,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-25",
       "check_in": "07:11",
@@ -20405,7 +20405,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-26",
       "check_in": "07:15",
@@ -20921,7 +20921,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-27",
       "check_in": "07:11",
@@ -21437,7 +21437,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-30",
       "check_in": "07:14",
@@ -21953,7 +21953,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-03-31",
       "check_in": "07:21",
@@ -22469,7 +22469,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-01",
       "check_in": "07:15",
@@ -22985,7 +22985,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-02",
       "check_in": "07:15",
@@ -23501,7 +23501,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-03",
       "check_in": "07:10",
@@ -24017,7 +24017,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-06",
       "check_in": "07:11",
@@ -24533,7 +24533,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-07",
       "check_in": "",
@@ -25049,7 +25049,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-08",
       "check_in": "",
@@ -25565,7 +25565,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-09",
       "check_in": "",
@@ -26081,7 +26081,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-10",
       "check_in": "",
@@ -26597,7 +26597,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-13",
       "check_in": "07:16",
@@ -27113,7 +27113,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-14",
       "check_in": "",
@@ -27629,7 +27629,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-15",
       "check_in": "",
@@ -28145,7 +28145,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-16",
       "check_in": "07:11",
@@ -28661,7 +28661,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-17",
       "check_in": "07:12",
@@ -29177,7 +29177,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-20",
       "check_in": "07:14",
@@ -29693,7 +29693,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-21",
       "check_in": "07:13",
@@ -30209,7 +30209,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-22",
       "check_in": "07:14",
@@ -30725,7 +30725,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-23",
       "check_in": "07:14",
@@ -31241,7 +31241,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-24",
       "check_in": "07:15",
@@ -31757,7 +31757,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-28",
       "check_in": "07:12",
@@ -32273,7 +32273,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-04-29",
       "check_in": "07:12",
@@ -32789,7 +32789,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-04",
       "check_in": "07:41",
@@ -33305,7 +33305,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-05",
       "check_in": "07:10",
@@ -33821,7 +33821,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-06",
       "check_in": "07:07",
@@ -34337,7 +34337,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-07",
       "check_in": "07:08",
@@ -34853,7 +34853,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-08",
       "check_in": "07:16",
@@ -35369,7 +35369,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-11",
       "check_in": "07:14",
@@ -35885,7 +35885,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-12",
       "check_in": "07:10",
@@ -36401,7 +36401,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-13",
       "check_in": "",
@@ -36917,7 +36917,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-14",
       "check_in": "",
@@ -37433,7 +37433,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-15",
       "check_in": "",
@@ -37949,7 +37949,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-18",
       "check_in": "",
@@ -38465,7 +38465,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-19",
       "check_in": "07:12",
@@ -38981,7 +38981,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-20",
       "check_in": "07:12",
@@ -39497,7 +39497,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-21",
       "check_in": "07:14",
@@ -40013,7 +40013,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-22",
       "check_in": "07:16",
@@ -40529,7 +40529,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-25",
       "check_in": "",
@@ -41045,7 +41045,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-26",
       "check_in": "",
@@ -41561,7 +41561,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-27",
       "check_in": "",
@@ -42077,7 +42077,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-28",
       "check_in": "",
@@ -42593,7 +42593,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-05-29",
       "check_in": "",
@@ -43109,7 +43109,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-01",
       "check_in": "07:11",
@@ -43637,7 +43637,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-02",
       "check_in": "07:15",
@@ -44165,7 +44165,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-03",
       "check_in": "07:13",
@@ -44693,7 +44693,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-04",
       "check_in": "07:23",
@@ -45221,7 +45221,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-05",
       "check_in": "",
@@ -45749,7 +45749,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-08",
       "check_in": "07:07",
@@ -46277,7 +46277,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-09",
       "check_in": "07:07",
@@ -46805,7 +46805,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-10",
       "check_in": "07:09",
@@ -47333,7 +47333,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-11",
       "check_in": "07:07",
@@ -47861,7 +47861,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-12",
       "check_in": "07:11",
@@ -48389,7 +48389,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-15",
       "check_in": "07:09",
@@ -48917,7 +48917,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-16",
       "check_in": "07:08",
@@ -49445,7 +49445,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-17",
       "check_in": "07:11",
@@ -49973,7 +49973,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-18",
       "check_in": "07:11",
@@ -50501,7 +50501,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-19",
       "check_in": "07:11",
@@ -51029,7 +51029,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-22",
       "check_in": "07:08",
@@ -51557,7 +51557,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-23",
       "check_in": "",
@@ -52085,7 +52085,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-24",
       "check_in": "",
@@ -52613,7 +52613,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-25",
       "check_in": "",
@@ -53141,7 +53141,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-26",
       "check_in": "",
@@ -53669,7 +53669,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-29",
       "check_in": "",
@@ -54197,7 +54197,7 @@
     },
     {
       "person_id": "10000027",
-      "name": "Yoo SangKyu",
+      "name": "Sang Yoo",
       "department": "KR Manager",
       "date": "2026-06-30",
       "check_in": "",
@@ -55213,7 +55213,7 @@
     {
       "id": 4,
       "title": "BT · 2026-02-05 ~ 2026-02-06 (2일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Sang Yoo",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-02-05",
       "end_date": "2026-02-06",
@@ -55232,7 +55232,7 @@
     {
       "id": 5,
       "title": "BT · 2026-02-24 ~ 2026-02-27 (4일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Sang Yoo",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-02-24",
       "end_date": "2026-02-27",
@@ -55251,7 +55251,7 @@
     {
       "id": 6,
       "title": "BT · 2026-03-04 ~ 2026-03-06 (3일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Sang Yoo",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-03-04",
       "end_date": "2026-03-06",
@@ -55270,7 +55270,7 @@
     {
       "id": 7,
       "title": "BT · 2026-03-10 ~ 2026-03-11 (2일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Sang Yoo",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-03-10",
       "end_date": "2026-03-11",
@@ -55289,7 +55289,7 @@
     {
       "id": 8,
       "title": "BT · 2026-04-07 ~ 2026-04-10 (4일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Sang Yoo",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-04-07",
       "end_date": "2026-04-10",
@@ -55308,7 +55308,7 @@
     {
       "id": 9,
       "title": "BT · 2026-04-13 ~ 2026-04-15 (3일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Sang Yoo",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-04-13",
       "end_date": "2026-04-15",
@@ -55712,7 +55712,7 @@
     {
       "id": 11,
       "title": "BT · 2026-05-18 ~ 2026-05-18 (1일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Sang Yoo",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-05-18",
       "end_date": "2026-05-18",
@@ -55731,7 +55731,7 @@
     {
       "id": 12,
       "title": "BT · 2026-05-25 ~ 2026-05-29 (5일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Sang Yoo",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-05-25",
       "end_date": "2026-05-29",
@@ -55750,7 +55750,7 @@
     {
       "id": 13,
       "title": "BT · 2026-06-22 ~ 2026-06-26 (5일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Sang Yoo",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-06-22",
       "end_date": "2026-06-26",
@@ -58690,7 +58690,7 @@
     {
       "id": 29,
       "title": "BT · 2026-05-13 ~ 2026-05-15 (3일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Sang Yoo",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-05-13",
       "end_date": "2026-05-15",
