@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v19",
+    "version": "v21",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-07T16:00:00Z"
+    "updated": "2026-07-07T16:30:00Z"
   },
   "employees": [
     {
@@ -57271,7 +57271,7 @@
       "id": 22,
       "title": "BT · 2026-05-19 ~ 2026-05-21 (3일)",
       "employee": "Le Thi Kim Anh (Aerum)",
-      "destination": "TBD (Timesheet BT)",
+      "destination": "Phu Quoc, VN",
       "start_date": "2026-05-19",
       "end_date": "2026-05-21",
       "purpose": "SOURCING",
@@ -57281,10 +57281,200 @@
       "currency": "VND",
       "partners": [],
       "itinerary": [],
-      "outcome": "",
+      "outcome": "방문 호텔 17곳 · Done 5 · In discussing 0 · Requested 5 · Rejected 0 · Pending 7 · 신규계약 시도 9",
       "roi": null,
       "notes": "Timesheet BT 자동 반영 · 3영업일",
-      "hotels": []
+      "hotels": [
+        {
+          "hotel": "Herbal Resort",
+          "contract": "Share rate",
+          "contact": "Ms. Trang",
+          "purpose": "",
+          "summary": "Met with the PIC to strengthen the relationship. Since it is currently the low season, the resort has very few guests and the occupancy is quite low. The hotel shared that they are remaining open mainly to maintain operations rather than for profit during this period. We have received better rates and have already updated them on the system.",
+          "followup": "Updated new promotion on the system",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "DONE"
+        },
+        {
+          "hotel": "Sunset Beach Resort & Spa",
+          "contract": "Share rate",
+          "contact": "Ms. Tươi",
+          "purpose": "",
+          "summary": "The resort is located in the city center and has a private beach, so it still maintains a stable number of guests, mainly from India and China. Starting from November, which is the high season, the resort is almost fully booked due to ALM contracts with Russian and CIS travel agents. HotelLink has been mapped to utilize the hotel’s inventory, and we have proposed promotions for the low season. They will review and provide feedback accordingly.",
+          "followup": "Proposal has been submitted to the hotel.",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "REQUESTED"
+        },
+        {
+          "hotel": "M Village Phu Quoc",
+          "contract": "Share rate",
+          "contact": "Mr. Thanh",
+          "purpose": "",
+          "summary": "PIC shared that the owner is requesting a price increase, so they are currently revising the price list for OTA channels. The hotel uses Ezcloud for both M Village and M Hotel, but OMH cannot map the data. The limited number of rooms and manual control will make room sales difficult.\nThe new price list will be updated on the OMH system after the hotel completes the process and sends it to us.",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "DONE"
+        },
+        {
+          "hotel": "La Mer Resort Phu Quoc",
+          "contract": "Share rate",
+          "contact": "Mr. Phát",
+          "purpose": "",
+          "summary": "Approach new PIC to build relationships, requested a price list from October onwards to boost sales for the high season, and he said he had prepared the prices and would send them tomorrow.",
+          "followup": "The price list has been received and is being updated in the system.",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "DONE"
+        },
+        {
+          "hotel": "Saigon Phu Quoc Resort",
+          "contract": "Dynamic Rate",
+          "contact": "Ms. Nhung",
+          "purpose": "",
+          "summary": "Approach new PIC to build relationships, We switched to a BAR contract (18%) starting from May and mapped D-Edge to maximize the resort’s inventory availability. They have also provided OMH with a Special Offer to push sales.",
+          "followup": "Updated new Special Offer on the system & mapped HotelLink",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "DONE"
+        },
+        {
+          "hotel": "Camia Resort Phu Quoc",
+          "contract": "Share rate",
+          "contact": "Ms. Ngọc",
+          "purpose": "",
+          "summary": "Met with the PIC to strengthen the relationship and discuss the current market situation. She shared that although the resort’s occupancy is lower compared to peak season months, it remains stable. The main guest markets are Australia, Europe, and India, while the number of Korean guests has decreased significantly compared to previous phase.",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "L'Azure Resort and Spa",
+          "contract": "Share rate",
+          "contact": "Ms. Nga",
+          "purpose": "",
+          "summary": "Discuss with PIC about reactivating the account on the OMH system and a solution to avoid overbooking issues. Request pricing for the period from November onwards. She said she would send an email with updated prices soon.",
+          "followup": "Sent an email requesting a price update.",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "REQUESTED"
+        },
+        {
+          "hotel": "Anja Beach Resort & Spa",
+          "contract": "Dynamic Rate",
+          "contact": "Mr. Hiếu",
+          "purpose": "",
+          "summary": "During this period, approximately 90% of the resort’s guests are from India. The PIC is quite strict regarding rate disparity issues, so they only operate under a BAR contract and maintain the same rates across all channels. We discussed increasing the commission from 15% to 18% and requested the resort to set up an additional 5-day Last Minute promotion to help drive sales.",
+          "followup": "Updated promotion last mn 5D off 50.5%",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "DONE"
+        },
+        {
+          "hotel": "Night Sea Hotel",
+          "contract": "Share rate",
+          "contact": "Mr. Tuấn",
+          "purpose": "",
+          "summary": "The PIC had closed all OMH ALM on HotelLink because AGD sent a report stating that OMH rates were being linked to their platform frequently and accounted for up to 50% of the hotel’s bookings. We explained the situation to the PIC and discussed possible cooperation solutions moving forward.->The hotel agreed to reopen the ALM on HotelLink and update rates for the period from November onward.\n→ Will keep f/u.",
+          "followup": "The hotel hasn't reactivated ALM on HTL yet; contacted them to push it.",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "WorldHotels Long Beach Resort Phu Quoc",
+          "contract": "New",
+          "contact": "Mr. Hiếu",
+          "purpose": "",
+          "summary": "New hotel 5* with 465 room key, Site inspection and discussing collaboration.\n->Sign contract share rate-Extranet/ Payment VCC",
+          "followup": "Have pushed the hotel to send the information to open the account.",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Sunset Sanato Resort Phu Quoc",
+          "contract": "New",
+          "contact": "Mr. Phan Lê",
+          "purpose": "",
+          "summary": "Approached the PIC to discuss potential cooperation. However, he shared that OMH mainly links rates to OTA channels, so they are unable to provide contracted rates to us at this time. We proposed proceeding with a BAR contract instead, and he will discuss internally and provide feedback later.",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "REQUESTED"
+        },
+        {
+          "hotel": "Muong Thanh Luxury Phu Quoc Hotel",
+          "contract": "Share Rate",
+          "contact": "Ms. Thư",
+          "purpose": "",
+          "summary": "The hotel has closed all ALM on HotelLink, Approached the new PIC to build the relationship and requested them to reopen the room allotment on HL. Proposed running an additional BAR contract in parallel with the Share Rate contract, but they mentioned that they could only operate one of the two models at a time, not both simultaneously. Requested the 2027 rates for update to system",
+          "followup": "The hotel has opened ALM on HotelLink, continue f/u to request 2027 prices.",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "JM Boutique Hotel",
+          "contract": "Share Rate",
+          "contact": "Ms. Sa",
+          "purpose": "",
+          "summary": "The hotel has a limited inventory (28 rooms), so overbooking situations occasionally occur. Discussed with the hotel and requested them to closely monitor room opening/closing on the Extranet to avoid overbooking issues.\nAlso requested the 2027 rates for system update",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "REQUESTED"
+        },
+        {
+          "hotel": "Ann Hotel Phu Quoc",
+          "contract": "Share Rate",
+          "contact": "Ms. Thu",
+          "purpose": "",
+          "summary": "Met with the PIC to build the relationship and discuss the current market situation. The hotel is currently closing OMH inventory from November onward. Requested them to reopen the allotment, however, they shared that they are still balancing inventory allocation as they are preparing to sign several HB contracts with the CIS market. Will kepp follow up and request them to reopen the ALM.",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "REQUESTED"
+        },
+        {
+          "hotel": "TH Luxury Hotel Phu Quoc",
+          "contract": "New",
+          "contact": "Mr. Trung",
+          "purpose": "",
+          "summary": "New hotel with 36 room keys, site inspection and discuss cooperation. Sign new contract share rate_Extranet, payment post pay 7days.",
+          "followup": "Have pushed the hotel to send the information to open the account.",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Momento Phu Quoc Hotel",
+          "contract": "New",
+          "contact": "Ms. Ngọc",
+          "purpose": "",
+          "summary": "New hotel with 18 room keys, site inspection and discuss cooperation. Sign new contract share rate_Extranet, payment VCC.",
+          "followup": "Updating on the system",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Sunset Town Phu Quoc Apartment",
+          "contract": "New",
+          "contact": "Ms. Thanh",
+          "purpose": "",
+          "summary": "New Apartment with 22 room keys, site inspection and discuss cooperation. Sign new contract share rate_Extranet, payment VCC",
+          "followup": "Updating on the system",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        }
+      ],
+      "expense_vnd": null,
+      "source_file": "Bzn Trip to Phu Quoc (19-21 May 2026).xlsx"
     },
     {
       "id": 23,

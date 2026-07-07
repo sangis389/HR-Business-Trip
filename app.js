@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v20";  // v20: SCM 출장 Analytics 뷰 (KPI + 지역/담당자 차트 + 매트릭스)
+const STORAGE_KEY = "vn-office-v21";  // v21: Aerum Phu Quoc 출장 Recap 반영
 const PAGE_SIZE = 50;
 
 // ==========================================================================
