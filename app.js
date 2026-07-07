@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v9";  // v9: Office/PD 부서 신설 · 4명 이동
+const STORAGE_KEY = "vn-office-v10";  // v10: 2026-01 근태 추가 · 부서 오버라이드 재적용
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1144,6 +1144,4 @@ function doughnut(counts, total, colors) {
     await load();
     render();
   } catch (e) {
-    console.error("Boot failed:", e);
-  }
-})();
+    console.error("Boot fai
