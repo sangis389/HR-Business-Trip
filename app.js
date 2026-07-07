@@ -54,6 +54,7 @@ let state = {
   filter_month: "ALL",
   filter_status: "ALL",
   page_att: 1,
+  late_tab: null,  // 대시보드 부서별 지각 Top 5 선택 탭
   loaded: false,
 };
 
@@ -536,36 +537,44 @@ function viewOverview() {
 
       <div class="card">
         <h3>부서별 누적 지각 Top 5</h3>
-        ${deptTopLate.length === 0 ? empty("지각 기록 없음") : `
-          <div style="display:flex; flex-direction:column; gap:14px;">
-            ${deptTopLate.map(({dept, isSCM, top, totalDeptLate}) => {
-              if (top.length === 0) return "";
-              const maxCnt = top[0][1];
-              return `
-                <div>
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                    <span style="font-size:12px; font-weight:600; ${isSCM ? "color:#4f46e5;" : "color:#475569;"}">
-                      ${escHTML(dept)}${isSCM ? " ⭐" : ""}
-                    </span>
-                    <span class="badge b-warn">총 ${totalDeptLate}회</span>
+        ${deptTopLate.length === 0 ? empty("지각 기록 없음") : (() => {
+          // 초기 선택 탭: state 에 없으면 SCM 우선, 없으면 총 지각 많은 부서
+          const availableTabs = deptTopLate.filter(d => d.top.length > 0);
+          if (!state.late_tab || !availableTabs.find(d => d.dept === state.late_tab)) {
+            const scmTab = availableTabs.find(d => d.isSCM);
+            state.late_tab = scmTab ? scmTab.dept : availableTabs[0].dept;
+          }
+          const selected = availableTabs.find(d => d.dept === state.late_tab) || availableTabs[0];
+          const maxCnt = selected.top[0][1];
+
+          return `
+            <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+              ${availableTabs.map(({dept, isSCM, totalDeptLate}) => {
+                const active = dept === state.late_tab;
+                return `
+                  <button onclick="state.late_tab='${escHTML(dept)}'; render();"
+                    style="border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:11px; font-weight:500;
+                           ${active ? (isSCM ? 'background:#4f46e5; color:#fff;' : 'background:#2563eb; color:#fff;')
+                                    : 'background:#f1f5f9; color:#475569;'}">
+                    ${isSCM ? "⭐ " : ""}${escHTML(dept.replace("Office/", ""))} · ${totalDeptLate}
+                  </button>
+                `;
+              }).join("")}
+            </div>
+            <div class="bar-chart">
+              ${selected.top.map(([pid, cnt]) => {
+                const emp = state.employees.find(e => e.person_id === pid);
+                return `
+                  <div class="bar-row">
+                    <span class="bar-label ${emp && emp.is_scm ? "scm" : ""}">${escHTML(emp ? emp.name : pid)}</span>
+                    <div class="bar-track"><div class="bar-fill warn" style="width:${(cnt/maxCnt)*100}%"></div></div>
+                    <span class="bar-value">${cnt}회</span>
                   </div>
-                  <div class="bar-chart">
-                    ${top.map(([pid, cnt]) => {
-                      const emp = state.employees.find(e => e.person_id === pid);
-                      return `
-                        <div class="bar-row">
-                          <span class="bar-label ${emp && emp.is_scm ? "scm" : ""}" style="width:110px; font-size:11px;">${escHTML(emp ? emp.name : pid)}</span>
-                          <div class="bar-track"><div class="bar-fill warn" style="width:${(cnt/maxCnt)*100}%"></div></div>
-                          <span class="bar-value" style="font-size:11px;">${cnt}회</span>
-                        </div>
-                      `;
-                    }).join("")}
-                  </div>
-                </div>
-              `;
-            }).join("")}
-          </div>
-        `}
+                `;
+              }).join("")}
+            </div>
+          `;
+        })()}
       </div>
 
       <div class="card">
