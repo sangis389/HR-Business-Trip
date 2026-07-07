@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v5";  // v5: KR Manager 부서 추가 (3명 재등록)
+const STORAGE_KEY = "vn-office-v6";  // v6: Yoo SangKyu 를 SCM Head 로 지정 (is_scm=true)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -689,7 +689,7 @@ function viewEmployees() {
               <td class="mono">${escHTML(e.person_id || "—")}</td>
               <td>
                 <b>${escHTML(e.name)}</b>
-                ${e.is_scm ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}
+                ${e.is_scm ? (e.position === "SCM Head" ? `<span class="badge b-scm" style="margin-left:6px; background:#4f46e5; color:#fff;">👑 SCM Head</span>` : `<span class="badge b-scm" style="margin-left:6px;">SCM</span>`) : ""}
               </td>
               <td>${escHTML(e.department || "—")}</td>
               <td>${escHTML(e.position || "—")}</td>
@@ -1086,7 +1086,7 @@ function viewReports() {
             const absent = att.filter(a => a.status === "ABSENT").length;
             return `
               <tr>
-                <td><b>${escHTML(e.name)}</b>${e.is_scm ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
+                <td><b>${escHTML(e.name)}</b>${e.is_scm ? (e.position === "SCM Head" ? `<span class="badge b-scm" style="margin-left:6px; background:#4f46e5; color:#fff;">👑 SCM Head</span>` : `<span class="badge b-scm" style="margin-left:6px;">SCM</span>`) : ""}</td>
                 <td class="mono">${escHTML(e.department || "—")}</td>
                 <td class="right">${att.length}</td>
                 <td class="right ${late > 3 ? "text-absent" : ""}">${late}</td>
@@ -1132,16 +1132,3 @@ function doughnut(counts, total, colors) {
     <div class="doughnut-wrap">
       <svg class="doughnut" viewBox="0 0 120 120">${paths}</svg>
       <div class="doughnut-legend">${legend}</div>
-    </div>
-  `;
-}
-
-// ==========================================================================
-// Boot
-// ==========================================================================
-(async function() {
-  try {
-    await load();
-    render();
-  } catch (e) {
-    console.error("Boot f
