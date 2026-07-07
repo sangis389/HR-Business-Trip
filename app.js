@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v18";  // v18: Lukas 추가 · Thu/Slena 출장 대상 제외
+const STORAGE_KEY = "vn-office-v19";  // v19: Andy 출장 3건 Recap 반영 (Hanoi)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1315,3 +1315,4 @@ function doughnut(counts, total, colors) {
     console.error("Boot failed:", e);
   }
 })();
+"flex:1;"
