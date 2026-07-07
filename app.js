@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v16";  // v16: 담당자별 트립 필터 (대시보드 카드 클릭 연동)
+const STORAGE_KEY = "vn-office-v17";  // v17: Recap 호텔 방문 리스트 + 성과 KPI
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -616,6 +616,42 @@ function viewOverview() {
     </div>
 
     ${(() => {
+      // 이달 SCM 트립 성과 KPI
+      const now = new Date();
+      const ym = now.toISOString().slice(0,7);
+      const thisMonthTrips = state.trips.filter(t => (t.start_date || "").startsWith(ym));
+      const allCompleted = state.trips.filter(t => t.status === "COMPLETED");
+      const totalHotels = allCompleted.reduce((s,t) => s + (t.hotels?.length || 0), 0);
+      const totalExpense = allCompleted.reduce((s,t) => s + (t.expense_vnd || 0), 0);
+      const newContracts = allCompleted.reduce((s,t) => s + (t.hotels || []).filter(h => (h.contract || "").toLowerCase().includes("new") || (h.purpose || "").toLowerCase().includes("new account") || (h.purpose || "").toLowerCase().includes("new contract")).length, 0);
+      const allHotels = allCompleted.flatMap(t => t.hotels || []);
+      const doneCount = allHotels.filter(h => h.status === "DONE").length;
+      const inProgCount = allHotels.filter(h => h.status === "IN_PROGRESS").length;
+      const followUpRate = allHotels.length > 0 ? (doneCount / allHotels.length * 100).toFixed(0) : "0";
+      const kpi = (label, val, sub, color) => `
+        <div style="flex:1; min-width:150px; padding:14px; border-radius:10px; background:${color}12; border:1px solid ${color}30;">
+          <div style="font-size:11px; color:#64748b; margin-bottom:6px;">${label}</div>
+          <div style="font-size:22px; font-weight:700; color:${color};">${val}</div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:2px;">${sub}</div>
+        </div>`;
+      return `
+        <div class="card mt-4">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0;">🎯 SCM 출장 성과 지표</h3>
+            <span style="font-size:11px; color:#64748b;">이달 ${thisMonthTrips.length}건 시작 · 전체 완료 ${allCompleted.length}건 기준</span>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            ${kpi("이달 트립", thisMonthTrips.length + "건", `${ym}`, "#0ea5e9")}
+            ${kpi("방문 호텔 (누적)", totalHotels + "곳", `평균 ${allCompleted.length > 0 ? (totalHotels / allCompleted.length).toFixed(0) : 0}곳/트립`, "#4f46e5")}
+            ${kpi("신규 계약 시도", newContracts + "건", `New Contract/Account`, "#16a34a")}
+            ${kpi("Follow-up 완료율", followUpRate + "%", `Done ${doneCount} / In discussing ${inProgCount}`, "#f59e0b")}
+            ${kpi("총 경비", (totalExpense/1000000).toFixed(1) + "M", `VND · 리포트 반영분`, "#dc2626")}
+          </div>
+        </div>
+      `;
+    })()}
+
+    ${(() => {
       // 담당자별 출장 요약 (SCM 인원 기준)
       const scmEmps = state.employees.filter(e => e.is_scm);
       const summary = scmEmps.map(e => {
@@ -955,6 +991,7 @@ function viewTrips() {
                       <div class="trip-card-title">${escHTML(t.title)}</div>
                       <div class="trip-card-meta">${escHTML(t.destination || "—")}</div>
                       <div class="trip-card-meta">${t.start_date} ~ ${t.end_date}</div>
+                      ${(t.hotels && t.hotels.length > 0) ? `<div class="trip-card-meta" style="color:#0ea5e9; margin-top:4px;">🏨 방문 ${t.hotels.length}곳${t.expense_vnd ? ` · ${(t.expense_vnd/1000).toFixed(0)}k VND` : ""}</div>` : ""}
                       ${pCount > 0 ? `<div class="trip-card-meta" style="color:#4f46e5; margin-top:4px;">🏨 파트너 ${pVisited}/${pCount}</div>` : ""}
                       <div class="trip-card-footer">
                         <span class="trip-card-owner truncate">${escHTML(t.employee)}</span>
@@ -1030,8 +1067,50 @@ function editTrip(id) {
 
     ${trip.outcome ? `
       <div style="border-top:1px solid #e2e8f0; padding-top:12px; margin-top:14px;">
-        <div style="font-size:11px; font-weight:600; margin-bottom:6px;">📋 출장 결과</div>
+        <div style="font-size:11px; font-weight:600; margin-bottom:6px;">📋 출장 결과 요약</div>
         <div style="font-size:13px; color:#475569; white-space:pre-wrap;">${escHTML(trip.outcome)}</div>
+      </div>
+    ` : ""}
+
+    ${(trip.hotels && trip.hotels.length > 0) ? `
+      <div style="margin-top:14px;">
+        <div style="font-size:11px; font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
+          <span>🏨 방문 호텔 Recap (${trip.hotels.length}곳)</span>
+          ${trip.expense_vnd ? `<span class="badge b-muted">💰 ${trip.expense_vnd.toLocaleString()} VND</span>` : ""}
+        </div>
+        <div style="max-height:420px; overflow:auto; border:1px solid #e2e8f0; border-radius:8px;">
+          <table style="width:100%; font-size:11px; border-collapse:collapse;">
+            <thead style="position:sticky; top:0; background:#f8fafc; z-index:1;">
+              <tr style="border-bottom:2px solid #e2e8f0;">
+                <th style="text-align:left; padding:6px 8px; width:26px;">#</th>
+                <th style="text-align:left; padding:6px 8px;">Hotel</th>
+                <th style="text-align:left; padding:6px 8px; width:110px;">Contract</th>
+                <th style="text-align:left; padding:6px 8px; width:140px;">Purpose</th>
+                <th style="text-align:left; padding:6px 8px; width:140px;">Follow-Up</th>
+                <th style="text-align:left; padding:6px 8px; width:110px;">1주 후 결과</th>
+                <th style="text-align:left; padding:6px 8px; width:90px;">상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${trip.hotels.map((h, i) => {
+                const st = h.status || "PENDING";
+                const stColor = {DONE:"#16a34a", REQUESTED:"#f59e0b", IN_PROGRESS:"#3b82f6", REJECTED:"#dc2626", PENDING:"#94a3b8"}[st] || "#94a3b8";
+                return `
+                  <tr style="border-bottom:1px solid #f1f5f9; vertical-align:top;">
+                    <td style="padding:6px 8px; color:#94a3b8;">${i+1}</td>
+                    <td style="padding:6px 8px;"><b>${escHTML(h.hotel || "")}</b>${h.contact ? `<div style="color:#94a3b8; font-size:10px; margin-top:2px;">${escHTML(h.contact)}</div>` : ""}</td>
+                    <td style="padding:6px 8px; color:#475569;">${escHTML(h.contract || "—")}</td>
+                    <td style="padding:6px 8px; color:#475569;">${escHTML((h.purpose || "").slice(0, 80))}</td>
+                    <td style="padding:6px 8px; color:#475569;">${escHTML((h.followup || "").slice(0, 80))}</td>
+                    <td style="padding:6px 8px; color:#475569;">${escHTML((h.result_1w || "").slice(0, 60))}</td>
+                    <td style="padding:6px 8px;"><span style="display:inline-block; padding:2px 6px; border-radius:4px; background:${stColor}20; color:${stColor}; font-size:10px; font-weight:600;">${st}</span></td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+        ${trip.source_file ? `<div style="font-size:10px; color:#94a3b8; margin-top:6px;">📎 원본 파일: ${escHTML(trip.source_file)}</div>` : ""}
       </div>
     ` : ""}
 
@@ -1102,41 +1181,37 @@ function viewReports() {
 
   return `
     <div class="flex center gap-3">
-      <h2 style="margin:0; font-size:16px;">리포트</h2>
-      <button class="btn btn-outline ml-auto" onclick="exportBackup()">📤 전체 백업 (JSON)</button>
+      <h2 style="margin:0; font-size:16px;">리포트</span></h2>
     </div>
 
     <div class="grid-2 mt-4">
       <div class="card">
-        <h3>부서별 인원 분포</h3>
-        ${barChart(Object.entries(deptEmp).sort((a,b) => b[1] - a[1]).map(([d, n]) => ({
-          label: d, value: n, scm: d.toUpperCase().includes("SCM"),
-        })))}
-      </div>
-
-      <div class="card">
-        <h3>월별 지각·결근 추이</h3>
-        <div class="monthly-chart">
+        <h3>월별 지각/결근</h3>
+        <div style="padding:12px;">
           ${monthly.map(m => `
-            <div class="month-col">
-              <div class="month-bars">
-                <div class="month-bar late" style="height:${(m.late/monthlyMax)*100}%;" title="지각 ${m.late}"></div>
-                <div class="month-bar absent" style="height:${(m.absent/monthlyMax)*100}%;" title="결근 ${m.absent}"></div>
+            <div style="margin-bottom:10px;">
+              <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;">
+                <b>${m.m}</b>
+                <span style="color:#94a3b8;">지각 ${m.late} · 결근 ${m.absent}</span>
               </div>
-              <div class="month-label">${m.month.slice(5)}</div>
-              <div style="font-size:10px; color:#64748b;">L${m.late} · A${m.absent}</div>
+              <div style="display:flex; gap:2px; height:16px;">
+                <div style="flex:${m.late}; background:#f59e0b; border-radius:2px;" title="지각 ${m.late}"></div>
+                <div style="flex:${m.absent}; background:#ef4444; border-radius:2px;" title="결근 ${m.absent}"></div>
+                <div style="flex:${Math.max(0, monthlyMax - m.late - m.absent)}; background:#f1f5f9;"></div>
+              </div>
             </div>
           `).join("")}
-        </div>
-        <div class="month-legend">
-          <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>지각</div>
-          <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>결근</div>
         </div>
       </div>
 
       <div class="card">
         <h3>근태 상태 분포</h3>
-        ${doughnut(attStatus, attTotal, { NORMAL: "#22c55e", LATE: "#f59e0b", ABSENT: "#ef4444", REMOTE: "#94a3b8", BUSINESS_TRIP: "#3b82f6", HOLIDAY: "#cbd5e1" })}
+        ${doughnut(attStatus, attTotal, { PRESENT: "#22c55e", LATE: "#f59e0b", ABSENT: "#ef4444", LEAVE: "#3b82f6", HOLIDAY: "#94a3b8" })}
+      </div>
+
+      <div class="card">
+        <h3>부서별 인원</h3>
+        ${doughnut(deptEmp, state.employees.length, { "Office/SCM": "#4f46e5", "Office/PD": "#7c3aed", "KR Manager": "#0ea5e9", "Office": "#94a3b8" })}
       </div>
 
       <div class="card">
@@ -1154,7 +1229,8 @@ function viewReports() {
         </tr></thead>
         <tbody>
           ${Object.entries(deptStats).sort((a,b) => (b[1].late/b[1].total) - (a[1].late/a[1].total)).map(([d, s]) => {
-            const rate = ((s.late / s.total) * 100).toFixed(1);const isSCM = d.toUpperCase().includes("SCM");
+            const rate = ((s.late / s.total) * 100).toFixed(1);
+            const isSCM = d.toUpperCase().includes("SCM");
             return `
               <tr>
                 <td><b>${escHTML(d)}</b>${isSCM ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
@@ -1187,7 +1263,7 @@ function viewReports() {
                 <td class="mono">${escHTML(e.department || "—")}</td>
                 <td class="right">${att.length}</td>
                 <td class="right ${late > 3 ? "text-absent" : ""}">${late}</td>
-                            <td class="right ${absent > 1 ? "text-absent" : ""}">${absent}</td>
+                <td class="right ${absent > 1 ? "text-absent" : ""}">${absent}</td>
                 <td class="right"><b>${(e.remaining_leave ?? 0).toFixed(1)}</b></td>
               </tr>
             `;
