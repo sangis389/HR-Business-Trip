@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v27";  // v27: 통합 캘린더 뷰 (담당자별 근무/출장/연차 월별 그리드)
+const STORAGE_KEY = "vn-office-v28";  // v28: 캘린더 부서별 필터 (전체/SCM/각 부서)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1859,7 +1859,7 @@ function viewCalendar() {
     const months = [...new Set(state.attendance.map(a => (a.date || "").slice(0,7)).filter(Boolean))].sort();
     state.cal_month = months[months.length - 1] || "2026-06";
   }
-  if (!state.cal_scope) state.cal_scope = "SCM"; // SCM | ALL
+  if (!state.cal_scope) state.cal_scope = "SCM"; // SCM | ALL | 부서명 (예: Office/SCM)
 
   const [yStr, mStr] = state.cal_month.split("-");
   const year = parseInt(yStr), month = parseInt(mStr);
@@ -1869,10 +1869,19 @@ function viewCalendar() {
   // 월 목록
   const allMonths = [...new Set([...state.attendance.map(a => (a.date || "").slice(0,7)), ...state.trips.map(t => (t.start_date || "").slice(0,7))].filter(Boolean))].sort();
 
+  // 부서 목록 (자동 추출)
+  const allDepts = [...new Set(state.employees.map(e => e.department).filter(Boolean))].sort();
+
   // 담당자 리스트
-  let emps = state.cal_scope === "SCM"
-    ? state.employees.filter(e => e.is_scm)
-    : state.employees.filter(e => e.department && (e.department.includes("Office") || e.department.includes("KR")));
+  let emps;
+  if (state.cal_scope === "SCM") {
+    emps = state.employees.filter(e => e.is_scm);
+  } else if (state.cal_scope === "ALL") {
+    emps = state.employees.slice();
+  } else {
+    // 특정 부서
+    emps = state.employees.filter(e => e.department === state.cal_scope);
+  }
   emps.sort((a,b) => {
     const aHead = a.position === "SCM Head" ? 1 : 0;
     const bHead = b.position === "SCM Head" ? 1 : 0;
@@ -1948,10 +1957,12 @@ function viewCalendar() {
             ${allMonths.map(m => `<button class="chip ${state.cal_month === m ? "active" : ""}" onclick="state.cal_month='${m}'; render();">${m}</button>`).join("")}
           </div>
         </div>
-        <div>
-          <div class="chip-label">범위</div>
+        <div style="flex:1; min-width:300px;">
+          <div class="chip-label">범위 · 부서</div>
           <div class="chips">
-            ${["SCM","ALL"].map(s => `<button class="chip ${state.cal_scope === s ? "active" : ""}" onclick="state.cal_scope='${s}'; render();">${s === "SCM" ? "SCM 담당자" : "전체 인원"}</button>`).join("")}
+            <button class="chip ${state.cal_scope === "ALL" ? "active" : ""}" onclick="state.cal_scope='ALL'; render();">전체 인원</button>
+            <button class="chip ${state.cal_scope === "SCM" ? "active" : ""}" onclick="state.cal_scope='SCM'; render();">👑 SCM 담당자</button>
+            ${allDepts.map(d => `<button class="chip ${state.cal_scope === d ? "active" : ""}" onclick="state.cal_scope='${escHTML(d)}'; render();">${escHTML(d)}</button>`).join("")}
           </div>
         </div>
       </div>
