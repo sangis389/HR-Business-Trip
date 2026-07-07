@@ -1132,3 +1132,18 @@ function doughnut(counts, total, colors) {
     <div class="doughnut-wrap">
       <svg class="doughnut" viewBox="0 0 120 120">${paths}</svg>
       <div class="doughnut-legend">${legend}</div>
+    </div>
+  `;
+}
+
+// ==========================================================================
+// Boot
+// ==========================================================================
+(async function() {
+  try {
+    await load();
+    render();
+  } catch (e) {
+    console.error("Boot failed:", e);
+  }
+})();
