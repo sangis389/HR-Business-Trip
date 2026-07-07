@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v26";  // v26: 출장 결과보고 자동 드롭존 (Report 시트 인식 · 트립 병합/신규)
+const STORAGE_KEY = "vn-office-v27";  // v27: 통합 캘린더 뷰 (담당자별 근무/출장/연차 월별 그리드)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -57,6 +57,8 @@ let state = {
   late_tab: null,  // 대시보드 부서별 지각 Top 5 선택 탭
   att_tab: "daily",  // 근태 페이지 서브탭: daily / leaves / summary
   filter_leave_type: "ALL",  // 휴가 이력 타입 필터
+  cal_month: null,           // 캘린더 뷰 월
+  cal_scope: "SCM",          // 캘린더 범위: SCM | ALL
   filter_trip_month: "ALL",  // SCM 출장 월별 필터
   filter_trip_employee: "ALL",  // SCM 출장 담당자 필터
   loaded: false,
@@ -654,8 +656,9 @@ function closeModal() { document.getElementById("modal")?.remove(); }
 const NAV = [
   { key: "overview",   label: "대시보드",   icon: "📊" },
   { key: "employees",  label: "인원 (VN)",  icon: "👥" },
-  { key: "attendance", label: "근태",       icon: "🕘" },
+  { key: "attendance", label: "근태·연차",  icon: "🕘" },
   { key: "trips",      label: "SCM 출장",   icon: "✈️" },
+  { key: "calendar",   label: "통합 캘린더", icon: "📅" },
   { key: "reports",    label: "리포트",     icon: "📈" },
 ];
 
@@ -687,7 +690,7 @@ function renderShell() {
   const scm = state.employees.filter(e => e.is_scm).length;
   const active = state.trips.filter(t => ["APPROVED","IN_PROGRESS"].includes(t.status)).length;
   const stats = `직원 ${state.employees.length} (SCM ${scm}) · 근태 ${state.attendance.length.toLocaleString()} · 진행 출장 ${active}`;
-  const titleMap = { overview: "대시보드", employees: "VN Office 인원", attendance: "근태", trips: "SCM 출장", reports: "리포트" };
+  const titleMap = { overview: "대시보드", employees: "VN Office 인원", attendance: "근태·연차", trips: "SCM 출장", calendar: "통합 캘린더", reports: "리포트" };
 
   return `
     <div class="app">
@@ -730,6 +733,7 @@ function render() {
     employees: viewEmployees,
     attendance: viewAttendance,
     trips: viewTrips,
+    calendar: viewCalendar,
     reports: viewReports,
   };
   content.innerHTML = (views[state.view] || viewOverview)();
@@ -1844,6 +1848,178 @@ function showModalReadOnly(title, body) {
   const div = document.createElement("div");
   div.innerHTML = html;
   document.body.appendChild(div.firstElementChild);
+}
+
+// ==========================================================================
+// View: 통합 캘린더 (SCM 담당자별 월별 근무/출장/연차 통합 뷰)
+// ==========================================================================
+function viewCalendar() {
+  // 월 선택 상태
+  if (!state.cal_month) {
+    const months = [...new Set(state.attendance.map(a => (a.date || "").slice(0,7)).filter(Boolean))].sort();
+    state.cal_month = months[months.length - 1] || "2026-06";
+  }
+  if (!state.cal_scope) state.cal_scope = "SCM"; // SCM | ALL
+
+  const [yStr, mStr] = state.cal_month.split("-");
+  const year = parseInt(yStr), month = parseInt(mStr);
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const days = Array.from({length: daysInMonth}, (_, i) => `${state.cal_month}-${String(i+1).padStart(2,"0")}`);
+
+  // 월 목록
+  const allMonths = [...new Set([...state.attendance.map(a => (a.date || "").slice(0,7)), ...state.trips.map(t => (t.start_date || "").slice(0,7))].filter(Boolean))].sort();
+
+  // 담당자 리스트
+  let emps = state.cal_scope === "SCM"
+    ? state.employees.filter(e => e.is_scm)
+    : state.employees.filter(e => e.department && (e.department.includes("Office") || e.department.includes("KR")));
+  emps.sort((a,b) => {
+    const aHead = a.position === "SCM Head" ? 1 : 0;
+    const bHead = b.position === "SCM Head" ? 1 : 0;
+    if (aHead !== bHead) return bHead - aHead;
+    return (a.name || "").localeCompare(b.name || "");
+  });
+
+  // Leave 데이터 (auto BT 포함)
+  const allLeaves = [...(state.leaves || []), ...autoGenerateBTLeaves()];
+  const leaveMap = {};
+  allLeaves.filter(l => l.status === "APPROVED").forEach(l => {
+    const key = `${l.person_id}|${l.date}`;
+    if (!leaveMap[key] || leaveInfo(l.type).deduct_annual) leaveMap[key] = l;
+  });
+
+  // 근태 lookup
+  const attMap = {};
+  state.attendance.forEach(a => {
+    attMap[`${a.person_id}|${a.date}`] = a;
+  });
+
+  // 요일 배열 (0=일, 6=토)
+  const dow = ["일","월","화","수","목","금","토"];
+  const isWeekend = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.getDay() === 0 || d.getDay() === 6;
+  };
+
+  // 셀 스타일 결정
+  const cellStyle = (emp, date) => {
+    const leave = leaveMap[`${emp.person_id}|${date}`];
+    const att = attMap[`${emp.person_id}|${date}`];
+    const weekend = isWeekend(date);
+
+    if (leave) {
+      const info = leaveInfo(leave.type);
+      return { bg: info.color, fg: "#fff", label: leave.type.replace("/",""), title: `${info.label}${leave.note ? " · " + leave.note : ""}` };
+    }
+    if (weekend) return { bg: "#f1f5f9", fg: "#94a3b8", label: "·", title: "주말" };
+    if (!att) return { bg: "#f8fafc", fg: "#cbd5e1", label: "", title: "데이터 없음" };
+    if (att.status === "LATE") return { bg: "#f59e0b", fg: "#fff", label: att.late_minutes ? `+${att.late_minutes}` : "L", title: `지각 ${att.late_minutes}분` };
+    if (att.status === "ABSENT") return { bg: "#dc2626", fg: "#fff", label: "A", title: "결근" };
+    return { bg: "#dcfce7", fg: "#16a34a", label: "○", title: "정상 출근" };
+  };
+
+  // 담당자별 월 요약
+  const empSummary = (emp) => {
+    let normalD = 0, lateD = 0, absentD = 0;
+    const byType = {};
+    Object.keys(LEAVE_TYPES).forEach(t => byType[t] = 0);
+    days.forEach(date => {
+      const leave = leaveMap[`${emp.person_id}|${date}`];
+      const att = attMap[`${emp.person_id}|${date}`];
+      if (leave) { byType[leave.type] = (byType[leave.type] || 0) + (leave.days || leaveInfo(leave.type).days); return; }
+      if (!att) return;
+      if (att.status === "LATE") lateD++;
+      else if (att.status === "ABSENT") absentD++;
+      else normalD++;
+    });
+    return { normalD, lateD, absentD, byType };
+  };
+
+  return `
+    <div class="flex center gap-3 wrap">
+      <h2 style="margin:0; font-size:16px;">📅 통합 캘린더 <span style="color:#94a3b8; font-size:13px;">담당자별 근무 · 출장 · 연차 통합 뷰</span></h2>
+    </div>
+
+    <div class="card mt-3">
+      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+        <div>
+          <div class="chip-label">월</div>
+          <div class="chips">
+            ${allMonths.map(m => `<button class="chip ${state.cal_month === m ? "active" : ""}" onclick="state.cal_month='${m}'; render();">${m}</button>`).join("")}
+          </div>
+        </div>
+        <div>
+          <div class="chip-label">범위</div>
+          <div class="chips">
+            ${["SCM","ALL"].map(s => `<button class="chip ${state.cal_scope === s ? "active" : ""}" onclick="state.cal_scope='${s}'; render();">${s === "SCM" ? "SCM 담당자" : "전체 인원"}</button>`).join("")}
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; font-size:11px;">
+        <span style="padding:2px 8px; border-radius:4px; background:#dcfce7; color:#16a34a;">○ 정상</span>
+        <span style="padding:2px 8px; border-radius:4px; background:#f59e0b; color:#fff;">지각 (분)</span>
+        <span style="padding:2px 8px; border-radius:4px; background:#dc2626; color:#fff;">A 결근</span>
+        <span style="padding:2px 8px; border-radius:4px; background:#3b82f6; color:#fff;">AL 연차</span>
+        <span style="padding:2px 8px; border-radius:4px; background:#f59e0b; color:#fff;">BT 출장</span>
+        <span style="padding:2px 8px; border-radius:4px; background:#dc2626; color:#fff;">SL 병가</span>
+        <span style="padding:2px 8px; border-radius:4px; background:#94a3b8; color:#fff;">UP 무급</span>
+        <span style="padding:2px 8px; border-radius:4px; background:#f1f5f9; color:#94a3b8;">· 주말</span>
+      </div>
+    </div>
+
+    <div class="card mt-3" style="padding:0; overflow:auto;">
+      <table style="border-collapse:collapse; font-size:10px; width:100%; min-width:900px;">
+        <thead>
+          <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+            <th style="text-align:left; padding:8px 10px; position:sticky; left:0; background:#f8fafc; z-index:2; min-width:120px;">담당자</th>
+            ${days.map(d => {
+              const dObj = new Date(d);
+              const day = dObj.getDate();
+              const w = dow[dObj.getDay()];
+              const weekend = dObj.getDay() === 0 || dObj.getDay() === 6;
+              return `<th style="padding:4px 2px; min-width:26px; font-weight:600; color:${weekend ? '#94a3b8' : '#0f172a'};">
+                <div style="font-size:10px;">${day}</div>
+                <div style="font-size:9px; opacity:0.6;">${w}</div>
+              </th>`;
+            }).join("")}
+            <th style="padding:8px; background:#eff6ff; min-width:80px;">요약</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${emps.map(emp => {
+            const summ = empSummary(emp);
+            const isHead = emp.position === "SCM Head";
+            const scmTraveler = emp.is_scm && emp.is_scm_traveler !== false;
+            return `
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:6px 10px; position:sticky; left:0; background:#fff; z-index:1; border-right:1px solid #e2e8f0;">
+                  <div style="font-weight:600; color:${isHead ? '#4f46e5' : '#0f172a'}; font-size:12px;">${isHead ? '👑 ' : ''}${escHTML(nickOnly(emp.name))}</div>
+                  <div style="font-size:9px; color:#94a3b8;">${escHTML(emp.department || "")}${scmTraveler ? " · 출장 대상" : ""}</div>
+                </td>
+                ${days.map(date => {
+                  const s = cellStyle(emp, date);
+                  return `<td style="padding:0; text-align:center; border:1px solid #f1f5f9;">
+                    <div style="background:${s.bg}; color:${s.fg}; padding:4px 2px; font-size:9px; font-weight:600; height:24px; display:flex; align-items:center; justify-content:center;" title="${escHTML(date + ' · ' + s.title)}">${escHTML(s.label)}</div>
+                  </td>`;
+                }).join("")}
+                <td style="padding:6px; background:#eff6ff; font-size:10px; text-align:center;">
+                  <div style="color:#16a34a; font-weight:600;">${summ.normalD}일 정상</div>
+                  ${summ.lateD > 0 ? `<div style="color:#f59e0b;">지각 ${summ.lateD}</div>` : ""}
+                  ${summ.absentD > 0 ? `<div style="color:#dc2626;">결근 ${summ.absentD}</div>` : ""}
+                  ${summ.byType["AL"] > 0 ? `<div style="color:#3b82f6;">AL ${summ.byType["AL"]}</div>` : ""}
+                  ${summ.byType["AL/2"] > 0 ? `<div style="color:#60a5fa;">AL/2 ${summ.byType["AL/2"]}</div>` : ""}
+                  ${summ.byType["BT"] > 0 ? `<div style="color:#f59e0b;">BT ${summ.byType["BT"]}</div>` : ""}
+                </td>
+              </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="font-size:11px; color:#64748b; margin-top:10px;">
+      💡 셀에 마우스를 올리면 상세 정보 (날짜 · 상태 · 지각 분 · 트립 목적지 등) 확인 가능. BT(출장) 은 SCM 트립 데이터에서 자동 반영됩니다.
+    </div>
+  `;
 }
 
 function viewReports() {
