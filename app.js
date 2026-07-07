@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v13";  // v13: Timesheet BT 23건 SCM 출장 반영
+const STORAGE_KEY = "vn-office-v14";  // v14: SCM 출장 월별 필터 UI 추가
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -55,6 +55,7 @@ let state = {
   filter_status: "ALL",
   page_att: 1,
   late_tab: null,  // 대시보드 부서별 지각 Top 5 선택 탭
+  filter_trip_month: "ALL",  // SCM 출장 월별 필터
   loaded: false,
 };
 
@@ -820,9 +821,23 @@ function handleTripFile(e) { if (e.target.files.length) importTripPlan(e.target.
 function viewTrips() {
   const cols = ["DRAFT","REQUESTED","APPROVED","IN_PROGRESS","COMPLETED"];
   const scmCount = state.employees.filter(e => e.is_scm).length;
+
+  // 트립 월 목록 (출장 시작월 기준)
+  const tripMonths = [...new Set(state.trips.map(t => (t.start_date || "").slice(0, 7)).filter(Boolean))].sort().reverse();
+  const monthTabs = ["ALL", ...tripMonths];
+  if (!state.filter_trip_month || !monthTabs.includes(state.filter_trip_month)) {
+    state.filter_trip_month = "ALL";
+  }
+
+  // 필터 적용
+  const filtered = state.trips.filter(t => {
+    if (state.filter_trip_month === "ALL") return true;
+    return (t.start_date || "").startsWith(state.filter_trip_month);
+  });
+
   return `
     <div class="flex center gap-3 wrap">
-      <h2 style="margin:0; font-size:16px;">SCM 출장 <span style="color:#94a3b8; font-size:13px;">(${state.trips.length}건 · 대상 ${scmCount}명)</span></h2>
+      <h2 style="margin:0; font-size:16px;">SCM 출장 <span style="color:#94a3b8; font-size:13px;">(${filtered.length} / ${state.trips.length}건 · 대상 ${scmCount}명)</span></h2>
       <div class="ml-auto flex gap-2">
         <button class="btn btn-outline" onclick="exportSheet('trips')">📤 엑셀 내보내기</button>
       </div>
@@ -836,9 +851,19 @@ function viewTrips() {
       ${dropzone("tripplan", "출장 계획서 엑셀 드래그")}
     </div>
 
+    <div class="card mt-3">
+      <div class="chip-label">월 필터 (출장 시작월 기준)</div>
+      <div class="chips">
+        ${monthTabs.map(m => {
+          const cnt = m === "ALL" ? state.trips.length : state.trips.filter(t => (t.start_date || "").startsWith(m)).length;
+          return `<button class="chip ${state.filter_trip_month === m ? "active" : ""}" onclick="state.filter_trip_month='${m}'; render();">${m === "ALL" ? "전체" : m} (${cnt})</button>`;
+        }).join("")}
+      </div>
+    </div>
+
     <div class="kanban mt-4">
       ${cols.map(col => {
-        const trips = state.trips.filter(t => t.status === col);
+        const trips = filtered.filter(t => t.status === col);
         return `
           <div class="kanban-col">
             <div class="kanban-head">
@@ -1110,40 +1135,4 @@ function doughnut(counts, total, colors) {
   let offset = 0;
   const paths = entries.map(([k, v]) => {
     const frac = v / total;
-    const dash = frac * c;
-    const color = colors[k] || "#94a3b8";
-    const el = `<circle r="${r}" cx="${cx}" cy="${cy}" fill="transparent" stroke="${color}" stroke-width="18" stroke-dasharray="${dash} ${c}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" />`;
-    offset += dash;
-    return el;
-  }).join("");
-
-  const legend = entries.map(([k, v]) => {
-    const pct = ((v / total) * 100).toFixed(1);
-    const color = colors[k] || "#94a3b8";
-    return `
-      <div class="legend-item">
-        <div><span class="legend-dot" style="background:${color}"></span>${k}</div>
-        <b>${v.toLocaleString()} (${pct}%)</b>
-      </div>
-    `;
-  }).join("");
-
-  return `
-    <div class="doughnut-wrap">
-      <svg class="doughnut" viewBox="0 0 120 120">${paths}</svg>
-      <div class="doughnut-legend">${legend}</div>
-    </div>
-  `;
-}
-
-// ==========================================================================
-// Boot
-// ==========================================================================
-(async function() {
-  try {
-    await load();
-    render();
-  } catch (e) {
-    console.error("Boot failed:", e);
-  }
-})();
+    const dash
