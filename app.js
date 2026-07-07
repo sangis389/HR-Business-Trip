@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v19";  // v19: Andy 출장 3건 Recap 반영 (Hanoi)
+const STORAGE_KEY = "vn-office-v20";  // v20: SCM 출장 Analytics 뷰 (KPI + 지역/담당자 차트 + 매트릭스)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -910,6 +910,205 @@ function handleTripFile(e) { if (e.target.files.length) importTripPlan(e.target.
 // editAttendance / deleteAttendance 제거됨 (수기 입력 기능 제거)
 
 // ==========================================================================
+// SCM 출장 Analytics (전체 필터일 때만 표시)
+// ==========================================================================
+function renderTripAnalytics() {
+  const trips = state.trips;
+  const totalTrips = trips.length;
+  const completed = trips.filter(t => t.status === "COMPLETED");
+  const allHotels = completed.flatMap(t => t.hotels || []);
+  const totalHotels = allHotels.length;
+  const totalExpense = completed.reduce((s,t) => s + (t.expense_vnd || 0), 0);
+  const newContracts = allHotels.filter(h => ((h.contract||"") + (h.purpose||"")).toLowerCase().includes("new")).length;
+  const doneCnt = allHotels.filter(h => h.status === "DONE").length;
+  const fuRate = allHotels.length > 0 ? Math.round(doneCnt / allHotels.length * 100) : 0;
+
+  const kpi = (label, val, sub, color) => `
+    <div style="flex:1; min-width:130px; padding:12px; border-radius:10px; background:${color}12; border:1px solid ${color}30;">
+      <div style="font-size:11px; color:#64748b; margin-bottom:4px;">${label}</div>
+      <div style="font-size:20px; font-weight:700; color:${color};">${val}</div>
+      <div style="font-size:10px; color:#94a3b8; margin-top:2px;">${sub}</div>
+    </div>`;
+
+  // 담당자별 트립 수 + 호텔 수
+  const byEmp = {};
+  trips.forEach(t => {
+    const e = t.employee || "?";
+    if (!byEmp[e]) byEmp[e] = { trips: 0, hotels: 0, expense: 0 };
+    byEmp[e].trips++;
+    byEmp[e].hotels += (t.hotels || []).length;
+    byEmp[e].expense += (t.expense_vnd || 0);
+  });
+  const empRows = Object.entries(byEmp).sort((a,b) => b[1].hotels - a[1].hotels || b[1].trips - a[1].trips);
+  const maxHotels = Math.max(1, ...empRows.map(r => r[1].hotels));
+
+  // 지역별 트립 수
+  const byDest = {};
+  trips.forEach(t => {
+    let d = (t.destination || "TBD").replace(", VN", "").trim();
+    if (d.startsWith("TBD")) d = "TBD (Timesheet)";
+    byDest[d] = (byDest[d] || 0) + 1;
+  });
+  const destRows = Object.entries(byDest).sort((a,b) => b[1] - a[1]);
+  const maxDest = Math.max(1, ...destRows.map(r => r[1]));
+
+  // 월 목록 (오름차순)
+  const months = [...new Set(trips.map(t => (t.start_date||"").slice(0,7)).filter(Boolean))].sort();
+
+  // 담당자 × 월 매트릭스: 트립 수 + 호텔 수
+  const matrix = {};
+  trips.forEach(t => {
+    const emp = t.employee || "?";
+    const m = (t.start_date||"").slice(0,7);
+    if (!m) return;
+    if (!matrix[emp]) matrix[emp] = {};
+    if (!matrix[emp][m]) matrix[emp][m] = { trips: 0, hotels: 0 };
+    matrix[emp][m].trips++;
+    matrix[emp][m].hotels += (t.hotels || []).length;
+  });
+
+  // 담당자 리스트 (트립 수 기준 정렬, SCM Head 우선)
+  const empList = Object.keys(matrix).sort((a,b) => {
+    const ea = state.employees.find(e => e.name === a);
+    const eb = state.employees.find(e => e.name === b);
+    const aHead = ea && ea.position === "SCM Head" ? 1 : 0;
+    const bHead = eb && eb.position === "SCM Head" ? 1 : 0;
+    if (aHead !== bHead) return bHead - aHead;
+    return (byEmp[b]?.trips || 0) - (byEmp[a]?.trips || 0);
+  });
+
+  const monthTotals = {};
+  months.forEach(m => {
+    monthTotals[m] = Object.values(matrix).reduce((s, empData) => s + (empData[m]?.trips || 0), 0);
+  });
+
+  const cellBg = (cnt) => {
+    if (cnt === 0) return "background:#f8fafc; color:#cbd5e1;";
+    if (cnt === 1) return "background:#dbeafe; color:#1e40af; font-weight:600;";
+    if (cnt === 2) return "background:#93c5fd; color:#1e3a8a; font-weight:700;";
+    return "background:#3b82f6; color:#fff; font-weight:700;";
+  };
+
+  const empShort = (name) => name.replace(/\s*\([^)]+\)/, "").trim();
+  const nickOf = (name) => (name.match(/\(([^)]+)\)/) || [])[1] || "";
+
+  return `
+    <div class="card mt-4" style="background:#eff6ff; border-color:#bfdbfe;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0; color:#1e40af;">📊 SCM 출장 Analytics</h3>
+        <span style="font-size:11px; color:#64748b;">전체 뷰 · 상세는 담당자/월 필터 선택</span>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        ${kpi("전체 트립", totalTrips + "건", `완료 ${completed.length} / 예정 ${totalTrips - completed.length}`, "#0ea5e9")}
+        ${kpi("방문 호텔", totalHotels + "곳", `평균 ${completed.length > 0 ? Math.round(totalHotels / completed.length) : 0}곳/트립`, "#4f46e5")}
+        ${kpi("신규 계약 시도", newContracts + "건", `New Contract/Account`, "#16a34a")}
+        ${kpi("Follow-up 완료율", fuRate + "%", `Done ${doneCnt} / ${allHotels.length}`, "#f59e0b")}
+        ${kpi("총 경비", (totalExpense/1000000).toFixed(1) + "M", "VND · 리포트 반영분", "#dc2626")}
+      </div>
+    </div>
+
+    <div class="grid-2 mt-3">
+      <div class="card">
+        <h3>🌍 방문 지역 분포</h3>
+        <div style="padding:8px 12px;">
+          ${destRows.map(([d, cnt]) => {
+            const pct = Math.round(cnt / maxDest * 100);
+            const isTBD = d.startsWith("TBD");
+            const color = isTBD ? "#94a3b8" : "#3b82f6";
+            return `
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; cursor:pointer;" title="${escHTML(d)} · ${cnt}건">
+                <div style="width:100px; font-weight:${isTBD ? '400' : '500'}; color:${isTBD ? '#94a3b8' : '#0f172a'};">${escHTML(d)}</div>
+                <div style="flex:1; height:16px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                  <div style="width:${pct}%; height:100%; background:${color}; border-radius:4px;"></div>
+                </div>
+                <div style="width:36px; text-align:right; font-weight:600;">${cnt}</div>
+              </div>`;
+          }).join("")}
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🏨 담당자별 방문 호텔 수 (누적)</h3>
+        <div style="padding:8px 12px;">
+          ${empRows.map(([emp, s]) => {
+            const pct = Math.round(s.hotels / maxHotels * 100);
+            const shortName = empShort(emp);
+            const isHead = state.employees.find(e => e.name === emp)?.position === "SCM Head";
+            return `
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; cursor:pointer;" onclick='setTripEmpFilter(${JSON.stringify(emp)})' title="${escHTML(emp)} · ${s.trips}건 · ${s.hotels}곳 · 클릭하면 필터">
+                <div style="width:110px; font-weight:500; color:${isHead ? '#4f46e5' : '#0f172a'};">${isHead ? '👑 ' : ''}${escHTML(shortName)}</div>
+                <div style="flex:1; height:16px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
+                  <div style="width:${pct}%; height:100%; background:#4f46e5; border-radius:4px;"></div>
+                </div>
+                <div style="width:60px; text-align:right; font-weight:600; font-size:11px;">${s.trips}건·${s.hotels}곳</div>
+              </div>`;
+          }).join("")}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <h3>🗓️ 담당자 × 월 매트릭스 <span style="font-size:11px; color:#64748b; font-weight:400;">(셀 클릭 시 해당 담당자·월 필터 · 색이 진할수록 트립 수 많음)</span></h3>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12px; min-width:700px;">
+          <thead>
+            <tr style="background:#f8fafc;">
+              <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #e2e8f0; position:sticky; left:0; background:#f8fafc; z-index:1;">담당자</th>
+              ${months.map(m => `<th style="text-align:center; padding:8px 6px; border-bottom:2px solid #e2e8f0; width:70px; font-weight:600;">${m.slice(5)}월</th>`).join("")}
+              <th style="text-align:center; padding:8px 10px; border-bottom:2px solid #e2e8f0; background:#eff6ff;">합계</th>
+              <th style="text-align:center; padding:8px 10px; border-bottom:2px solid #e2e8f0; background:#eff6ff;">호텔</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${empList.map(emp => {
+              const isHead = state.employees.find(e => e.name === emp)?.position === "SCM Head";
+              const shortName = empShort(emp);
+              const nick = nickOf(emp);
+              const totalTr = byEmp[emp]?.trips || 0;
+              const totalHo = byEmp[emp]?.hotels || 0;
+              return `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:6px 10px; position:sticky; left:0; background:#fff; z-index:1; cursor:pointer;" onclick='setTripEmpFilter(${JSON.stringify(emp)})' title="담당자 필터">
+                    <div style="font-weight:600; color:${isHead ? '#4f46e5' : '#0f172a'};">${isHead ? '👑 ' : ''}${escHTML(shortName)}</div>
+                    ${nick ? `<div style="font-size:10px; color:#94a3b8;">${escHTML(nick)}</div>` : ""}
+                  </td>
+                  ${months.map(m => {
+                    const cell = matrix[emp]?.[m];
+                    const cnt = cell?.trips || 0;
+                    const ho = cell?.hotels || 0;
+                    return `<td style="text-align:center; padding:0; border:1px solid #f1f5f9;">
+                      <div style="${cellBg(cnt)} padding:8px 4px; cursor:pointer; font-size:11px;" onclick='setTripCellFilter(${JSON.stringify(emp)}, ${JSON.stringify(m)})' title="${escHTML(shortName)} · ${m} · ${cnt}건 · ${ho}곳">
+                        ${cnt > 0 ? `${cnt}${ho > 0 ? `<div style="font-size:9px; opacity:0.8;">${ho}곳</div>` : ""}` : '·'}
+                      </div>
+                    </td>`;
+                  }).join("")}
+                  <td style="text-align:center; padding:6px; background:#eff6ff; font-weight:700; color:#1e40af;">${totalTr}건</td>
+                  <td style="text-align:center; padding:6px; background:#eff6ff; font-weight:600; color:#4f46e5;">${totalHo > 0 ? totalHo + '곳' : '—'}</td>
+                </tr>`;
+            }).join("")}
+            <tr style="background:#eff6ff; font-weight:700; border-top:2px solid #bfdbfe;">
+              <td style="padding:8px 10px; position:sticky; left:0; background:#eff6ff;">합계</td>
+              ${months.map(m => `<td style="text-align:center; padding:6px; color:#1e40af;">${monthTotals[m]}</td>`).join("")}
+              <td style="text-align:center; padding:6px; color:#1e40af;">${totalTrips}</td>
+              <td style="text-align:center; padding:6px; color:#4f46e5;">${totalHotels}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// 매트릭스 셀 클릭 → 담당자+월 동시 필터
+function setTripCellFilter(emp, month) {
+  state.filter_trip_employee = emp;
+  state.filter_trip_month = month;
+  render();
+  const content = document.querySelector(".content");
+  if (content) content.scrollTop = 0;
+}
+
+// ==========================================================================
 // View: Trips
 // ==========================================================================
 function viewTrips() {
@@ -970,7 +1169,9 @@ function viewTrips() {
       </div>
     </div>
 
-    <div class="kanban mt-4">
+    ${(state.filter_trip_month === "ALL" && state.filter_trip_employee === "ALL") ? renderTripAnalytics() : ""}
+
+    <div class="kanban mt-4" style="${(state.filter_trip_month === "ALL" && state.filter_trip_employee === "ALL") ? "display:none;" : ""}">
       ${cols.map(col => {
         const trips = filtered.filter(t => t.status === col);
         return `
@@ -1123,39 +1324,42 @@ function editTrip(id) {
   `);
 }
 
-// Read-only modal (닫기 버튼만 있는 뷰 전용 모달)
 function showModalReadOnly(title, body) {
   const html = `
     <div class="modal-backdrop" id="modal">
       <div class="modal">
         <div class="modal-head">
-          <div>${title}</div>
-          <button class="modal-close" onclick="closeModal()">✕</button>
+          <h3 style="margin:0; font-size:15px;">${title}</h3>
+          <button class="btn btn-outline" onclick="closeModal()">✕</button>
         </div>
         <div class="modal-body">${body}</div>
         <div class="modal-foot">
-          <button class="btn btn-outline" onclick="closeModal()">닫기</button>
+          <button class="btn btn-primary" onclick="closeModal()">닫기</button>
         </div>
       </div>
     </div>`;
-  document.body.insertAdjacentHTML("beforeend", html);
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  document.body.appendChild(div.firstElementChild);
+}
+
+function closeModal() {
+  const m = document.getElementById("modal");
+  if (m) m.remove();
 }
 
 // ==========================================================================
-// View: Reports (pure CSS/SVG charts - no library)
+// View: Reports
 // ==========================================================================
 function viewReports() {
   // Monthly stats
-  const months = [...new Set(state.attendance.map(a => (a.date || "").slice(0, 7)).filter(Boolean))].sort();
-  const monthly = months.map(m => ({
-    month: m,
-    late: state.attendance.filter(a => a.date.startsWith(m) && a.status === "LATE").length,
-    absent: state.attendance.filter(a => a.date.startsWith(m) && a.status === "ABSENT").length,
-    total: state.attendance.filter(a => a.date.startsWith(m)).length,
+  const monthly = ["2026-03","2026-04","2026-05","2026-06"].map(m => ({
+    m,
+    late: state.attendance.filter(a => a.date && a.date.startsWith(m) && a.status === "LATE").length,
+    absent: state.attendance.filter(a => a.date && a.date.startsWith(m) && a.status === "ABSENT").length,
   }));
   const monthlyMax = Math.max(1, ...monthly.map(m => Math.max(m.late, m.absent)));
 
-  // Dept stats
   const deptStats = {};
   state.attendance.forEach(a => {
     if (!a.department) return;
@@ -1165,23 +1369,20 @@ function viewReports() {
     if (a.status === "ABSENT") deptStats[a.department].absent++;
   });
 
-  // Attendance status distribution
   const attStatus = {};
   state.attendance.forEach(a => { attStatus[a.status] = (attStatus[a.status] || 0) + 1; });
   const attTotal = state.attendance.length;
 
-  // Trip status distribution
   const tripStatus = {};
   state.trips.forEach(t => { tripStatus[t.status] = (tripStatus[t.status] || 0) + 1; });
   const tripTotal = state.trips.length;
 
-  // Dept employees
   const deptEmp = {};
   state.employees.forEach(e => { deptEmp[e.department] = (deptEmp[e.department] || 0) + 1; });
 
   return `
     <div class="flex center gap-3">
-      <h2 style="margin:0; font-size:16px;">리포트</span></h2>
+      <h2 style="margin:0; font-size:16px;">리포트</h2>
     </div>
 
     <div class="grid-2 mt-4">
@@ -1195,8 +1396,8 @@ function viewReports() {
                 <span style="color:#94a3b8;">지각 ${m.late} · 결근 ${m.absent}</span>
               </div>
               <div style="display:flex; gap:2px; height:16px;">
-                <div style="flex:${m.late}; background:#f59e0b; border-radius:2px;" title="지각 ${m.late}"></div>
-                <div style="flex:${m.absent}; background:#ef4444; border-radius:2px;" title="결근 ${m.absent}"></div>
+                <div style="flex:${m.late}; background:#f59e0b; border-radius:2px;"></div>
+                <div style="flex:${m.absent}; background:#ef4444; border-radius:2px;"></div>
                 <div style="flex:${Math.max(0, monthlyMax - m.late - m.absent)}; background:#f1f5f9;"></div>
               </div>
             </div>
@@ -1271,7 +1472,6 @@ function viewReports() {
         </tbody>
       </table></div>
     </div>
-  </div>
   `;
 }
 
@@ -1315,4 +1515,3 @@ function doughnut(counts, total, colors) {
     console.error("Boot failed:", e);
   }
 })();
-"flex:1;"
