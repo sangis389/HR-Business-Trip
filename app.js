@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v3";  // v3: 5명 삭제 반영
+const STORAGE_KEY = "vn-office-v4";  // v4: 추가 3명 삭제 반영
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1146,4 +1146,3 @@ function doughnut(counts, total, colors) {
   } catch (e) {
     console.error("Boot failed:", e);
   }
-})();
