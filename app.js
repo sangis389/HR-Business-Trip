@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v24";  // v24: SCM 출장 필터 chip 카운트 숫자 제거
+const STORAGE_KEY = "vn-office-v25";  // v25: 근태·연차 통합 (3탭) + Leave Type 분류 (AL/AL2/UP/PL/SL/MN 등)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -55,6 +55,8 @@ let state = {
   filter_status: "ALL",
   page_att: 1,
   late_tab: null,  // 대시보드 부서별 지각 Top 5 선택 탭
+  att_tab: "daily",  // 근태 페이지 서브탭: daily / leaves / summary
+  filter_leave_type: "ALL",  // 휴가 이력 타입 필터
   filter_trip_month: "ALL",  // SCM 출장 월별 필터
   filter_trip_employee: "ALL",  // SCM 출장 담당자 필터
   loaded: false,
@@ -388,6 +390,61 @@ function escHTML(s) {
 }
 function val(id) { return document.getElementById(id).value.trim(); }
 function fmt(n) { return (n || 0).toLocaleString(); }
+
+// ============================================================================
+// Leave Type 정의 (연차 신청 유형)
+// ============================================================================
+const LEAVE_TYPES = {
+  "AL":    { label: "Annual Leave",         short: "AL",    days: 1.0, deduct_annual: true,  paid: true,  group: "annual",   color: "#3b82f6" },
+  "AL/2":  { label: "Half Annual Leave",    short: "AL/2",  days: 0.5, deduct_annual: true,  paid: true,  group: "annual",   color: "#60a5fa" },
+  "UP":    { label: "Unpaid Leave",         short: "UP",    days: 1.0, deduct_annual: false, paid: false, group: "unpaid",   color: "#94a3b8" },
+  "UP/2":  { label: "Half Unpaid Leave",    short: "UP/2",  days: 0.5, deduct_annual: false, paid: false, group: "unpaid",   color: "#cbd5e1" },
+  "H":     { label: "Holiday",              short: "H",     days: 1.0, deduct_annual: false, paid: true,  group: "paid_pl",  color: "#16a34a" },
+  "CL":    { label: "Compensation Leave",   short: "CL",    days: 1.0, deduct_annual: false, paid: true,  group: "paid_pl",  color: "#22c55e" },
+  "MR":    { label: "Marriage Leave",       short: "MR",    days: 1.0, deduct_annual: false, paid: true,  group: "paid_pl",  color: "#ec4899" },
+  "FL":    { label: "Funeral Leave",        short: "FL",    days: 1.0, deduct_annual: false, paid: true,  group: "paid_pl",  color: "#64748b" },
+  "BT":    { label: "Business Trip",        short: "BT",    days: 1.0, deduct_annual: false, paid: true,  group: "paid_pl",  color: "#f59e0b" },
+  "SL":    { label: "Sick Leave",           short: "SL",    days: 1.0, deduct_annual: false, paid: false, group: "sick",     color: "#dc2626" },
+  "MN":    { label: "Maternity Leave (SI)", short: "MN",    days: 1.0, deduct_annual: false, paid: false, group: "maternity",color: "#f472b6" },
+};
+function leaveInfo(type) { return LEAVE_TYPES[type] || { label: type, short: type, days: 1, deduct_annual: false, paid: false, group: "other", color: "#94a3b8" }; }
+
+// Auto-generate BT leave records from state.trips (for leave view)
+function autoGenerateBTLeaves() {
+  const bt = [];
+  (state.trips || []).forEach(t => {
+    if (!["APPROVED","IN_PROGRESS","COMPLETED"].includes(t.status)) return;
+    if (!t.start_date || !t.end_date) return;
+    const start = new Date(t.start_date);
+    const end = new Date(t.end_date);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dstr = d.toISOString().slice(0,10);
+      bt.push({
+        id: `bt-${t.id}-${dstr}`,
+        person_id: (state.employees.find(e => e.name === t.employee) || {}).person_id,
+        name: t.employee,
+        date: dstr,
+        type: "BT",
+        days: 1.0,
+        status: "APPROVED",
+        note: `Trip #${t.id} · ${t.destination || ""}`,
+        auto: true,
+      });
+    }
+  });
+  return bt;
+}
+
+// 담당자별 연차 잔여 계산 (annual - AL - AL/2*0.5)
+function calcRemainingLeave(emp) {
+  const annual = emp.annual_leave || 0;
+  const myLeaves = (state.leaves || []).filter(l => l.person_id === emp.person_id && l.status === "APPROVED");
+  const usedAnnual = myLeaves.reduce((s, l) => {
+    const info = leaveInfo(l.type);
+    return info.deduct_annual ? s + (l.days || info.days) : s;
+  }, 0);
+  return { annual, usedAnnual, remaining: annual - usedAnnual };
+}
 // 담당자 이름을 영문 닉네임만 표시 (예: "Le Thi Kim Anh (Aerum)" → "Aerum", "Yoo SangKyu" → "Yoo SangKyu")
 function nickOnly(name) {
   const m = (name || "").match(/\(([^)]+)\)/);
@@ -816,6 +873,31 @@ function viewEmployees() {
 // View: Attendance
 // ==========================================================================
 function viewAttendance() {
+  if (!state.att_tab) state.att_tab = "daily";
+  const tabs = [
+    { id: "daily",   label: "🗓️ 일별 근태" },
+    { id: "leaves",  label: "🏖️ 휴가 이력" },
+    { id: "summary", label: "📊 담당자별 요약" },
+  ];
+  return `
+    <div class="flex center gap-3 wrap">
+      <h2 style="margin:0; font-size:16px;">근태 · 휴가 관리</h2>
+    </div>
+
+    <div class="card mt-3" style="padding:6px; background:#f8fafc; display:flex; gap:4px;">
+      ${tabs.map(t => `
+        <button style="flex:1; padding:8px; border-radius:6px; border:none; cursor:pointer; background:${state.att_tab === t.id ? '#4f46e5' : 'transparent'}; color:${state.att_tab === t.id ? '#fff' : '#64748b'}; font-weight:${state.att_tab === t.id ? '600' : '400'}; font-size:13px;" onclick="state.att_tab='${t.id}'; state.page_att=1; render();">${t.label}</button>
+      `).join("")}
+    </div>
+
+    ${state.att_tab === "daily" ? renderAttendanceDaily() : ""}
+    ${state.att_tab === "leaves" ? renderLeavesTab() : ""}
+    ${state.att_tab === "summary" ? renderAttendanceSummary() : ""}
+  `;
+}
+
+// ===== 일별 근태 (기존 뷰) =====
+function renderAttendanceDaily() {
   const depts = ["ALL", ...new Set(state.employees.map(e => e.department))];
   const months = ["ALL", ...new Set(state.attendance.map(a => (a.date || "").slice(0, 7)).filter(Boolean))].sort().reverse();
   const statuses = ["ALL","NORMAL","LATE","ABSENT"];
@@ -832,19 +914,19 @@ function viewAttendance() {
   if (state.page_att > totalPages) state.page_att = 1;
   const paginated = filtered.slice((state.page_att - 1) * PAGE_SIZE, state.page_att * PAGE_SIZE);
 
-  return `
-    <div class="flex center gap-3 wrap">
-      <h2 style="margin:0; font-size:16px;">근태 <span style="color:#94a3b8; font-size:13px;">(${filtered.length.toLocaleString()} / ${state.attendance.length.toLocaleString()})</span></h2>
-      <div class="ml-auto flex gap-2">
-        <button class="btn btn-outline" onclick="exportSheet('attendance')">📤 필터 결과 내보내기</button>
-      </div>
-    </div>
+  // Leave 데이터 join: 각 근태 record 의 name+date 로 leaves 매칭 → 상태를 leave type 으로 오버라이드
+  const allLeaves = [...(state.leaves || []), ...autoGenerateBTLeaves()];
+  const leaveMap = {};
+  allLeaves.filter(l => l.status === "APPROVED").forEach(l => {
+    leaveMap[`${l.name}|${l.date}`] = l;
+  });
 
+  return `
     <div class="mt-3">
       ${dropzone("attendance", "근태 엑셀 (KEYWATCH 형식) 드래그")}
     </div>
 
-    <div class="card mt-4">
+    <div class="card mt-3">
       <div class="chip-label">부서</div>
       <div class="chips">
         ${depts.map(d => `<button class="chip ${state.filter_dept === d ? "active" : ""}" onclick="state.filter_dept='${d}'; state.page_att=1; render();">${d === "ALL" ? "전체" : escHTML(d)}</button>`).join("")}
@@ -859,27 +941,41 @@ function viewAttendance() {
       </div>
     </div>
 
-    <div class="card mt-4" style="padding:0;">
+    <div style="font-size:12px; color:#64748b; margin-top:8px;">
+      총 ${filtered.length.toLocaleString()} / ${state.attendance.length.toLocaleString()}건
+      <button class="btn btn-outline btn-sm ml-3" onclick="exportSheet('attendance')">📤 필터 결과 내보내기</button>
+    </div>
+
+    <div class="card mt-3" style="padding:0;">
       <div class="table-wrap"><table>
         <thead><tr>
           <th>날짜</th><th>이름</th><th>부서</th><th>출근</th><th>퇴근</th>
-          <th class="right">지각(분)</th><th>상태</th>
+          <th class="right">지각(분)</th><th>상태 / 휴가</th>
         </tr></thead>
         <tbody>
-          ${paginated.map(a => `
-            <tr>
-              <td>${a.date}</td>
-              <td>
-                <b>${escHTML(a.name)}</b>
-                ${a.department && a.department.toUpperCase().includes("SCM") ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}
-              </td>
-              <td class="mono">${escHTML(a.department || "—")}</td>
-              <td>${a.check_in || "—"}</td>
-              <td>${a.check_out || "—"}</td>
-              <td class="right ${a.late_minutes > 0 ? "text-late" : ""}">${a.late_minutes || "—"}</td>
-              <td><span class="badge b-${a.status === "LATE" ? "warn" : a.status === "ABSENT" ? "danger" : "success"}">${a.status}</span></td>
-            </tr>
-          `).join("")}
+          ${paginated.map(a => {
+            const leaveMatched = leaveMap[`${a.name}|${a.date}`];
+            let statusHtml;
+            if (leaveMatched) {
+              const info = leaveInfo(leaveMatched.type);
+              statusHtml = `<span style="display:inline-block; padding:2px 8px; border-radius:4px; background:${info.color}20; color:${info.color}; font-size:11px; font-weight:600;" title="${escHTML(info.label)}${leaveMatched.note ? ' · '+escHTML(leaveMatched.note) : ''}">${leaveMatched.type}</span>`;
+            } else {
+              statusHtml = `<span class="badge b-${a.status === "LATE" ? "warn" : a.status === "ABSENT" ? "danger" : "success"}">${a.status}</span>`;
+            }
+            return `
+              <tr>
+                <td>${a.date}</td>
+                <td>
+                  <b>${escHTML(a.name)}</b>
+                  ${a.department && a.department.toUpperCase().includes("SCM") ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}
+                </td>
+                <td class="mono">${escHTML(a.department || "—")}</td>
+                <td>${a.check_in || "—"}</td>
+                <td>${a.check_out || "—"}</td>
+                <td class="right ${a.late_minutes > 0 ? "text-late" : ""}">${a.late_minutes || "—"}</td>
+                <td>${statusHtml}</td>
+              </tr>`;
+          }).join("")}
         </tbody>
       </table></div>
     </div>
@@ -891,6 +987,149 @@ function viewAttendance() {
         <button class="btn btn-outline btn-sm" ${state.page_att === totalPages ? "disabled" : ""} onclick="state.page_att=Math.min(${totalPages},state.page_att+1); render();">다음</button>
       </div>
     ` : ""}
+  `;
+}
+
+// ===== 휴가 이력 탭 =====
+function renderLeavesTab() {
+  const allLeaves = [...(state.leaves || []), ...autoGenerateBTLeaves()];
+  const months = ["ALL", ...new Set(allLeaves.map(l => (l.date || "").slice(0,7)).filter(Boolean))].sort().reverse();
+  const types = ["ALL", ...Object.keys(LEAVE_TYPES)];
+
+  if (!months.includes(state.filter_month)) state.filter_month = "ALL";
+  const activeType = state.filter_leave_type || "ALL";
+
+  let filtered = allLeaves.filter(l => {
+    if (state.filter_month !== "ALL" && !(l.date || "").startsWith(state.filter_month)) return false;
+    if (activeType !== "ALL" && l.type !== activeType) return false;
+    return true;
+  });
+  filtered.sort((a,b) => (b.date || "").localeCompare(a.date || ""));
+
+  // 통계: 타입별 카운트
+  const typeCounts = {};
+  Object.keys(LEAVE_TYPES).forEach(t => typeCounts[t] = 0);
+  allLeaves.filter(l => l.status === "APPROVED").forEach(l => {
+    if (typeCounts[l.type] !== undefined) typeCounts[l.type] += (l.days || leaveInfo(l.type).days);
+  });
+
+  return `
+    <div class="card mt-3" style="background:#eff6ff; border-color:#bfdbfe; padding:10px 14px; font-size:12px; color:#1e3a8a;">
+      ℹ️ 휴가는 <b>AL / AL/2</b> 만 연차 잔여에서 차감됩니다. <b>PL(H/CL/MR/FL/BT)</b> 은 유급, <b>UP/UP/2/SL/MN</b> 은 무급/특수. BT 는 SCM 트립에서 자동 반영됩니다.
+    </div>
+
+    <div class="card mt-3">
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+        ${Object.entries(LEAVE_TYPES).map(([t, info]) => `
+          <div style="padding:6px 10px; border-radius:6px; background:${info.color}15; border:1px solid ${info.color}40; font-size:11px;">
+            <span style="color:${info.color}; font-weight:700;">${t}</span>
+            <span style="color:#64748b; margin-left:4px;">${info.label}</span>
+            <span style="color:${info.color}; font-weight:600; margin-left:6px;">${typeCounts[t]}</span>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="chip-label">월</div>
+      <div class="chips">
+        ${months.map(m => `<button class="chip ${state.filter_month === m ? "active" : ""}" onclick="state.filter_month='${m}'; render();">${m === "ALL" ? "전체" : m}</button>`).join("")}
+      </div>
+      <div class="chip-label mt-2">유형</div>
+      <div class="chips">
+        ${types.map(t => `<button class="chip ${activeType === t ? "active" : ""}" onclick="state.filter_leave_type='${t}'; render();">${t === "ALL" ? "전체" : t}</button>`).join("")}
+      </div>
+    </div>
+
+    <div class="card mt-3" style="padding:0;">
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>날짜</th><th>담당자</th><th>부서</th><th>유형</th><th class="right">일수</th><th>상태</th><th>메모</th>
+        </tr></thead>
+        <tbody>
+          ${filtered.length === 0 ? `<tr><td colspan="7" style="text-align:center; padding:24px; color:#94a3b8;">이력 없음</td></tr>` :
+            filtered.slice(0, 200).map(l => {
+              const info = leaveInfo(l.type);
+              const emp = state.employees.find(e => e.name === l.name);
+              const dept = emp?.department || "—";
+              return `
+                <tr>
+                  <td>${l.date}</td>
+                  <td><b>${escHTML(nickOnly(l.name))}</b></td>
+                  <td class="mono">${escHTML(dept)}</td>
+                  <td><span style="display:inline-block; padding:2px 8px; border-radius:4px; background:${info.color}20; color:${info.color}; font-size:11px; font-weight:600;" title="${escHTML(info.label)}">${l.type}</span></td>
+                  <td class="right">${l.days || info.days}</td>
+                  <td><span class="badge b-${l.status === "APPROVED" ? "success" : l.status === "REQUESTED" ? "warn" : "muted"}">${l.status || "—"}</span></td>
+                  <td style="font-size:11px; color:#64748b;">${escHTML(l.note || "")}${l.auto ? '<span class="badge b-muted" style="margin-left:4px; font-size:9px;">AUTO</span>' : ""}</td>
+                </tr>`;
+            }).join("")}
+        </tbody>
+      </table></div>
+      ${filtered.length > 200 ? `<div style="padding:8px 12px; font-size:11px; color:#94a3b8; text-align:center;">200건 표시 · 필터로 좁혀서 보세요</div>` : ""}
+    </div>
+  `;
+}
+
+// ===== 담당자별 요약 탭 =====
+function renderAttendanceSummary() {
+  const allLeaves = [...(state.leaves || []), ...autoGenerateBTLeaves()];
+  const rows = state.employees.map(e => {
+    const att = state.attendance.filter(a => a.person_id === e.person_id);
+    const late = att.filter(a => a.status === "LATE").length;
+    const absent = att.filter(a => a.status === "ABSENT").length;
+    const my = allLeaves.filter(l => l.person_id === e.person_id && l.status === "APPROVED");
+    const byType = {};
+    Object.keys(LEAVE_TYPES).forEach(t => byType[t] = 0);
+    my.forEach(l => { if (byType[l.type] !== undefined) byType[l.type] += (l.days || leaveInfo(l.type).days); });
+    const usedAnnual = byType["AL"] + byType["AL/2"];
+    const remaining = (e.annual_leave || 0) - usedAnnual;
+    // fallback: baseline remaining if no leaves data yet
+    const displayRemaining = (state.leaves && state.leaves.length > 0) ? remaining : (e.remaining_leave ?? 0);
+    return { e, att, late, absent, byType, usedAnnual, remaining: displayRemaining };
+  }).sort((a,b) => (b.late+b.absent) - (a.late+a.absent));
+
+  return `
+    <div class="card mt-3" style="background:#eff6ff; border-color:#bfdbfe; padding:10px 14px; font-size:12px; color:#1e3a8a;">
+      ℹ️ <b>잔여 연차</b> = 부여 - (AL + AL/2 × 0.5). 휴가 이력이 아직 없으면 기존 baseline 값(2026-06 기준) 을 표시.
+    </div>
+
+    <div class="card mt-3" style="padding:0;">
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>담당자</th><th>부서</th>
+          <th class="right">근태</th><th class="right">지각</th><th class="right">결근</th>
+          <th class="right" style="background:#eff6ff;">AL</th>
+          <th class="right" style="background:#eff6ff;">AL/2</th>
+          <th class="right">UP</th><th class="right">SL</th><th class="right">BT</th>
+          <th class="right">기타 PL</th>
+          <th class="right" style="background:#fef3c7;">부여</th>
+          <th class="right" style="background:#fef3c7;">사용</th>
+          <th class="right" style="background:#dcfce7;">잔여</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(r => {
+            const otherPL = r.byType["H"] + r.byType["CL"] + r.byType["MR"] + r.byType["FL"];
+            return `
+              <tr>
+                <td><b>${escHTML(nickOnly(r.e.name))}</b>${r.e.is_scm ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
+                <td class="mono">${escHTML(r.e.department || "—")}</td>
+                <td class="right">${r.att.length}</td>
+                <td class="right ${r.late > 3 ? "text-late" : ""}">${r.late || "—"}</td>
+                <td class="right ${r.absent > 1 ? "text-absent" : ""}">${r.absent || "—"}</td>
+                <td class="right" style="background:#eff6ff;">${r.byType["AL"] || "—"}</td>
+                <td class="right" style="background:#eff6ff;">${r.byType["AL/2"] || "—"}</td>
+                <td class="right">${(r.byType["UP"]+r.byType["UP/2"]) || "—"}</td>
+                <td class="right">${r.byType["SL"] || "—"}</td>
+                <td class="right">${r.byType["BT"] || "—"}</td>
+                <td class="right">${otherPL || "—"}</td>
+                <td class="right" style="background:#fef3c7;"><b>${(r.e.annual_leave || 0).toFixed(1)}</b></td>
+                <td class="right" style="background:#fef3c7;">${r.usedAnnual.toFixed(1)}</td>
+                <td class="right" style="background:#dcfce7;"><b>${r.remaining.toFixed(1)}</b></td>
+              </tr>`;
+          }).join("")}
+        </tbody>
+      </table></div>
+    </div>
   `;
 }
 
@@ -1247,7 +1486,7 @@ function editTrip(id) {
   showModalReadOnly(`SCM 출장 상세 #${trip.id}`, `
     <div style="font-size:16px; font-weight:600; margin-bottom:10px;">${escHTML(trip.title || "—")}</div>
 
-    ${row("담당자", escHTML(trip.employee || "—"))}
+    ${row("담당자", escHTML(nickOnly(trip.employee) || "—"))}
     ${row("목적지", escHTML(trip.destination || "—"))}
     ${row("기간", `${trip.start_date || "—"} ~ ${trip.end_date || "—"}`)}
     ${row("목적", escHTML(trip.purpose || "—"))}
@@ -1360,16 +1599,10 @@ function showModalReadOnly(title, body) {
   document.body.appendChild(div.firstElementChild);
 }
 
-function closeModal() {
-  const m = document.getElementById("modal");
-  if (m) m.remove();
-}
-
 // ==========================================================================
 // View: Reports
 // ==========================================================================
 function viewReports() {
-  // Monthly stats
   const monthly = ["2026-03","2026-04","2026-05","2026-06"].map(m => ({
     m,
     late: state.attendance.filter(a => a.date && a.date.startsWith(m) && a.status === "LATE").length,
@@ -1424,7 +1657,7 @@ function viewReports() {
 
       <div class="card">
         <h3>근태 상태 분포</h3>
-        ${doughnut(attStatus, attTotal, { PRESENT: "#22c55e", LATE: "#f59e0b", ABSENT: "#ef4444", LEAVE: "#3b82f6", HOLIDAY: "#94a3b8" })}
+        ${doughnut(attStatus, attTotal, { PRESENT: "#22c55e", NORMAL: "#22c55e", LATE: "#f59e0b", ABSENT: "#ef4444", LEAVE: "#3b82f6", HOLIDAY: "#94a3b8" })}
       </div>
 
       <div class="card">
@@ -1441,50 +1674,18 @@ function viewReports() {
     <div class="card mt-4">
       <h3>부서별 근태 요약</h3>
       <div class="table-wrap"><table>
-        <thead><tr>
-          <th>부서</th><th class="right">총 근태</th>
-          <th class="right">지각</th><th class="right">결근</th><th class="right">지각률</th>
-        </tr></thead>
+        <thead><tr><th>부서</th><th class="right">총 근태</th><th class="right">지각</th><th class="right">결근</th><th class="right">지각률</th></tr></thead>
         <tbody>
           ${Object.entries(deptStats).sort((a,b) => (b[1].late/b[1].total) - (a[1].late/a[1].total)).map(([d, s]) => {
             const rate = ((s.late / s.total) * 100).toFixed(1);
             const isSCM = d.toUpperCase().includes("SCM");
-            return `
-              <tr>
+            return `<tr>
                 <td><b>${escHTML(d)}</b>${isSCM ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
                 <td class="right">${s.total.toLocaleString()}</td>
                 <td class="right ${s.late > 20 ? "text-late" : ""}">${s.late}</td>
                 <td class="right ${s.absent > 5 ? "text-absent" : ""}">${s.absent}</td>
                 <td class="right"><b>${rate}%</b></td>
-              </tr>
-            `;
-          }).join("")}
-        </tbody>
-      </table></div>
-    </div>
-
-    <div class="card mt-4">
-      <h3>인원별 근태 요약</h3>
-      <div class="table-wrap"><table>
-        <thead><tr>
-          <th>이름</th><th>부서</th><th class="right">근태</th>
-          <th class="right">지각</th><th class="right">결근</th><th class="right">잔여 연차</th>
-        </tr></thead>
-        <tbody>
-          ${state.employees.map(e => {
-            const att = state.attendance.filter(a => a.person_id === e.person_id);
-            const late = att.filter(a => a.status === "LATE").length;
-            const absent = att.filter(a => a.status === "ABSENT").length;
-            return `
-              <tr>
-                <td><b>${escHTML(e.name)}</b>${e.is_scm ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
-                <td class="mono">${escHTML(e.department || "—")}</td>
-                <td class="right">${att.length}</td>
-                <td class="right ${late > 3 ? "text-absent" : ""}">${late}</td>
-                <td class="right ${absent > 1 ? "text-absent" : ""}">${absent}</td>
-                <td class="right"><b>${(e.remaining_leave ?? 0).toFixed(1)}</b></td>
-              </tr>
-            `;
+              </tr>`;
           }).join("")}
         </tbody>
       </table></div>
@@ -1494,9 +1695,7 @@ function viewReports() {
 
 function doughnut(counts, total, colors) {
   const entries = Object.entries(counts).filter(([, v]) => v > 0);
-  if (!entries.length || total === 0) {
-    return `<div style="text-align:center; padding:32px; color:#94a3b8;">데이터 없음</div>`;
-  }
+  if (!entries.length || total === 0) return `<div style="text-align:center; padding:32px; color:#94a3b8;">데이터 없음</div>`;
   const C = 2 * Math.PI * 60;
   let acc = 0;
   const arcs = entries.map(([k, v]) => {
@@ -1510,8 +1709,7 @@ function doughnut(counts, total, colors) {
     <div style="display:flex; align-items:center; gap:6px; font-size:12px; margin:2px 0;">
       <div style="width:12px; height:12px; background:${colors[k] || "#94a3b8"}; border-radius:3px;"></div>
       <span>${k}: <b>${v}</b> (${((v/total)*100).toFixed(0)}%)</span>
-    </div>
-  `).join("");
+    </div>`).join("");
   return `
     <div style="display:flex; align-items:center; gap:16px; padding:12px;">
       <svg width="160" height="160" viewBox="0 0 160 160">${arcs}
@@ -1519,8 +1717,7 @@ function doughnut(counts, total, colors) {
         <text x="80" y="94" text-anchor="middle" font-size="20" font-weight="bold" fill="#0f172a">${total}</text>
       </svg>
       <div style="flex:1;">${legend}</div>
-    </div>
-  `;
+    </div>`;
 }
 
 (async function() {

@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v23",
+    "version": "v25",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-07T17:00:00Z"
+    "updated": "2026-07-07T18:00:00Z"
   },
   "employees": [
     {
@@ -19,9 +19,11 @@
       "gender": "Female",
       "is_scm": true,
       "id": 1,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 4.0,
-      "is_scm_traveler": true
+      "is_scm_traveler": true,
+      "used_leave": 8.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000006",
@@ -31,8 +33,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 2,
-      "annual_leave": 13,
-      "remaining_leave": 7.5
+      "annual_leave": 13.0,
+      "remaining_leave": 7.5,
+      "used_leave": 5.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000007",
@@ -42,8 +46,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 3,
-      "annual_leave": 13,
-      "remaining_leave": 9.5
+      "annual_leave": 13.0,
+      "remaining_leave": 9.5,
+      "used_leave": 3.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000009",
@@ -53,8 +59,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 4,
-      "annual_leave": 13,
-      "remaining_leave": 10.0
+      "annual_leave": 13.0,
+      "remaining_leave": 10.0,
+      "used_leave": 3.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000012",
@@ -64,9 +72,11 @@
       "gender": "Female",
       "is_scm": true,
       "id": 5,
-      "annual_leave": 13,
+      "annual_leave": 13.0,
       "remaining_leave": 4.5,
-      "is_scm_traveler": true
+      "is_scm_traveler": true,
+      "used_leave": 8.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000018",
@@ -76,8 +86,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 6,
-      "annual_leave": 13,
-      "remaining_leave": 10.5
+      "annual_leave": 13.0,
+      "remaining_leave": 10.5,
+      "used_leave": 2.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000019",
@@ -87,8 +99,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 7,
-      "annual_leave": 13,
-      "remaining_leave": 9.5
+      "annual_leave": 13.0,
+      "remaining_leave": 9.5,
+      "used_leave": 3.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000020",
@@ -98,8 +112,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 8,
-      "annual_leave": 13,
-      "remaining_leave": 12.0
+      "annual_leave": 13.0,
+      "remaining_leave": 12.0,
+      "used_leave": 1.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000021",
@@ -109,8 +125,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 9,
-      "annual_leave": 12,
-      "remaining_leave": 9.5
+      "annual_leave": 12.0,
+      "remaining_leave": 9.5,
+      "used_leave": 2.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000023",
@@ -120,8 +138,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 10,
-      "annual_leave": 13,
-      "remaining_leave": 7.5
+      "annual_leave": 13.0,
+      "remaining_leave": 7.5,
+      "used_leave": 5.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000025",
@@ -131,8 +151,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 11,
-      "annual_leave": 12,
-      "remaining_leave": 9.0
+      "annual_leave": 12.0,
+      "remaining_leave": 9.0,
+      "used_leave": 3.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000029",
@@ -142,8 +164,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 12,
-      "annual_leave": 12,
-      "remaining_leave": 9.0
+      "annual_leave": 12.0,
+      "remaining_leave": 9.0,
+      "used_leave": 3.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000030",
@@ -153,8 +177,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 13,
-      "annual_leave": 12,
-      "remaining_leave": 8.0
+      "annual_leave": 12.0,
+      "remaining_leave": 8.0,
+      "used_leave": 4.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000031",
@@ -164,8 +190,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 14,
-      "annual_leave": 12,
-      "remaining_leave": 9.0
+      "annual_leave": 12.0,
+      "remaining_leave": 9.0,
+      "used_leave": 3.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000044",
@@ -175,8 +203,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 15,
-      "annual_leave": 12,
-      "remaining_leave": 11.0
+      "annual_leave": 12.0,
+      "remaining_leave": 11.0,
+      "used_leave": 1.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000054",
@@ -186,8 +216,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 16,
-      "annual_leave": 12,
-      "remaining_leave": 7.0
+      "annual_leave": 12.0,
+      "remaining_leave": 7.0,
+      "used_leave": 5.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000058",
@@ -197,8 +229,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 17,
-      "annual_leave": 12,
-      "remaining_leave": 6.0
+      "annual_leave": 12.0,
+      "remaining_leave": 6.0,
+      "used_leave": 6.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000059",
@@ -208,8 +242,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 18,
-      "annual_leave": 12,
-      "remaining_leave": 4.0
+      "annual_leave": 12.0,
+      "remaining_leave": 4.0,
+      "used_leave": 8.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "00000060",
@@ -219,8 +255,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 19,
-      "annual_leave": 12,
-      "remaining_leave": 7.5
+      "annual_leave": 12.0,
+      "remaining_leave": 7.5,
+      "used_leave": 4.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000010",
@@ -230,9 +268,11 @@
       "gender": "Female",
       "is_scm": true,
       "id": 20,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 6.5,
-      "is_scm_traveler": true
+      "is_scm_traveler": true,
+      "used_leave": 5.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000026",
@@ -242,8 +282,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 21,
-      "annual_leave": 12,
-      "remaining_leave": 9.0
+      "annual_leave": 12.0,
+      "remaining_leave": 9.0,
+      "used_leave": 3.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000034",
@@ -253,8 +295,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 22,
-      "annual_leave": 12,
-      "remaining_leave": 12.0
+      "annual_leave": 12.0,
+      "remaining_leave": 12.0,
+      "used_leave": 0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000046",
@@ -264,8 +308,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 23,
-      "annual_leave": 12,
-      "remaining_leave": 6.5
+      "annual_leave": 12.0,
+      "remaining_leave": 6.5,
+      "used_leave": 5.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000052",
@@ -275,9 +321,11 @@
       "gender": "Male",
       "is_scm": true,
       "id": 24,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 7.0,
-      "is_scm_traveler": true
+      "is_scm_traveler": true,
+      "used_leave": 5.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000053",
@@ -287,8 +335,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 25,
-      "annual_leave": 12,
-      "remaining_leave": 12
+      "annual_leave": 12.0,
+      "remaining_leave": 12.0,
+      "used_leave": 0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000055",
@@ -298,8 +348,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 26,
-      "annual_leave": 12,
-      "remaining_leave": 10.0
+      "annual_leave": 12.0,
+      "remaining_leave": 10.0,
+      "used_leave": 2.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000056",
@@ -309,9 +361,11 @@
       "gender": "Female",
       "is_scm": true,
       "id": 27,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 9.0,
-      "is_scm_traveler": false
+      "is_scm_traveler": false,
+      "used_leave": 3.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000058",
@@ -321,8 +375,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 28,
-      "annual_leave": 12,
-      "remaining_leave": 8.0
+      "annual_leave": 12.0,
+      "remaining_leave": 8.0,
+      "used_leave": 4.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000059",
@@ -332,8 +388,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 29,
-      "annual_leave": 12,
-      "remaining_leave": 7.0
+      "annual_leave": 12.0,
+      "remaining_leave": 7.0,
+      "used_leave": 5.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000061",
@@ -343,8 +401,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 30,
-      "annual_leave": 12,
-      "remaining_leave": 5.0
+      "annual_leave": 12.0,
+      "remaining_leave": 5.0,
+      "used_leave": 7.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000063",
@@ -354,8 +414,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 31,
-      "annual_leave": 12,
-      "remaining_leave": 9.0
+      "annual_leave": 12.0,
+      "remaining_leave": 9.0,
+      "used_leave": 3.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000065",
@@ -365,8 +427,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 32,
-      "annual_leave": 12,
-      "remaining_leave": 5.5
+      "annual_leave": 12.0,
+      "remaining_leave": 5.5,
+      "used_leave": 6.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000070",
@@ -376,9 +440,11 @@
       "gender": "Female",
       "is_scm": true,
       "id": 33,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 5.5,
-      "is_scm_traveler": false
+      "is_scm_traveler": false,
+      "used_leave": 6.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000071",
@@ -388,9 +454,11 @@
       "gender": "Female",
       "is_scm": true,
       "id": 34,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 0.5,
-      "is_scm_traveler": true
+      "is_scm_traveler": true,
+      "used_leave": 11.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000074",
@@ -400,9 +468,11 @@
       "gender": "Male",
       "is_scm": true,
       "id": 35,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 9.5,
-      "is_scm_traveler": true
+      "is_scm_traveler": true,
+      "used_leave": 2.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000079",
@@ -412,8 +482,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 36,
-      "annual_leave": 12,
-      "remaining_leave": 9.0
+      "annual_leave": 12.0,
+      "remaining_leave": 9.0,
+      "used_leave": 3.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000091",
@@ -423,8 +495,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 37,
-      "annual_leave": 12,
-      "remaining_leave": 3.0
+      "annual_leave": 12.0,
+      "remaining_leave": 3.0,
+      "used_leave": 9.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000092",
@@ -434,8 +508,10 @@
       "gender": "Male",
       "is_scm": false,
       "id": 38,
-      "annual_leave": 12,
-      "remaining_leave": 9.0
+      "annual_leave": 12.0,
+      "remaining_leave": 9.0,
+      "used_leave": 3.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000093",
@@ -445,8 +521,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 39,
-      "annual_leave": 12,
-      "remaining_leave": 8.0
+      "annual_leave": 12.0,
+      "remaining_leave": 8.0,
+      "used_leave": 4.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000095",
@@ -456,9 +534,11 @@
       "gender": "Male",
       "is_scm": true,
       "id": 40,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 0.0,
-      "is_scm_traveler": true
+      "is_scm_traveler": true,
+      "used_leave": 12.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000097",
@@ -468,8 +548,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 41,
-      "annual_leave": 12,
-      "remaining_leave": 7.0
+      "annual_leave": 12.0,
+      "remaining_leave": 7.0,
+      "used_leave": 5.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000098",
@@ -479,8 +561,10 @@
       "gender": "Female",
       "is_scm": false,
       "id": 42,
-      "annual_leave": 12,
-      "remaining_leave": 7.0
+      "annual_leave": 12.0,
+      "remaining_leave": 7.0,
+      "used_leave": 5.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000027",
@@ -489,10 +573,12 @@
       "position": "SCM Head",
       "gender": "Male",
       "is_scm": true,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 10.5,
       "id": 43,
-      "is_scm_traveler": true
+      "is_scm_traveler": true,
+      "used_leave": 1.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000090",
@@ -501,9 +587,11 @@
       "position": "",
       "gender": "Male",
       "is_scm": false,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 8.0,
-      "id": 44
+      "id": 44,
+      "used_leave": 4.0,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000094",
@@ -512,9 +600,11 @@
       "position": "",
       "gender": "Male",
       "is_scm": false,
-      "annual_leave": 12,
+      "annual_leave": 12.0,
       "remaining_leave": 6.5,
-      "id": 45
+      "id": 45,
+      "used_leave": 5.5,
+      "leave_baseline_date": "2026-06-30"
     },
     {
       "person_id": "10000099",
@@ -525,9 +615,10 @@
       "is_scm": true,
       "is_scm_traveler": true,
       "annual_leave": 12.0,
-      "used_leave": 0.0,
+      "used_leave": 0,
       "remaining_leave": 12.0,
-      "note": "출장 담당 · 근태 미포함"
+      "note": "출장 담당 · 근태 미포함",
+      "leave_baseline_date": "2026-06-30"
     }
   ],
   "attendance": [
@@ -58948,5 +59039,6 @@
       "roi": null,
       "outcome": "방문 호텔 20곳 · Done 14 · In discussing 0 · Requested 0 · Rejected 0 · Pending 6 · 신규계약 시도 0"
     }
-  ]
+  ],
+  "leaves": []
 }
