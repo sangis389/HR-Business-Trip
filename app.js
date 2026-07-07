@@ -1144,4 +1144,6 @@ function doughnut(counts, total, colors) {
     await load();
     render();
   } catch (e) {
-    console.error("Boot fai
+    console.error("Boot failed:", e);
+  }
+})();
