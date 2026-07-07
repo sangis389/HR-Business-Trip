@@ -2,8 +2,48 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v1";
+const STORAGE_KEY = "vn-office-v2";  // v2: 08:15 지각 기준 반영
 const PAGE_SIZE = 50;
+
+// ==========================================================================
+// 회사 표준 시업 시각
+// ==========================================================================
+const SCHEDULED_START_HOUR = 8;
+const SCHEDULED_START_MIN = 15;   // 08:15 이후부터 1분 단위 지각 (08:16 = 1분 지각)
+
+function computeLateMinutes(check_in) {
+  if (!check_in) return 0;
+  const m = String(check_in).match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return 0;
+  const inMin = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  const startMin = SCHEDULED_START_HOUR * 60 + SCHEDULED_START_MIN;
+  return Math.max(0, inMin - startMin);
+}
+
+// 근태 기록 하나의 late_minutes / status 를 08:15 규칙으로 재계산
+function recomputeAttendance(a) {
+  const hasCheckIn = !!a.check_in;
+  const hasCheckOut = !!a.check_out;
+  if (!hasCheckIn && !hasCheckOut) {
+    a.late_minutes = 0;
+    if (a.status !== "HOLIDAY" && a.status !== "REMOTE" && a.status !== "BUSINESS_TRIP") {
+      a.status = "ABSENT";
+    }
+    return;
+  }
+  const late = computeLateMinutes(a.check_in);
+  a.late_minutes = late;
+  if (late > 0) {
+    if (a.status === "NORMAL" || a.status === "LATE") a.status = "LATE";
+  } else {
+    if (a.status === "LATE") a.status = "NORMAL";
+  }
+}
+
+// 전체 근태 재계산
+function recomputeAllAttendance() {
+  (state.attendance || []).forEach(recomputeAttendance);
+}
 
 let state = {
   view: "overview",
@@ -40,6 +80,7 @@ async function load() {
         state.employees = p.employees;
         state.attendance = p.attendance || [];
         state.trips = p.trips || [];
+        recomputeAllAttendance();  // 08:15 규칙으로 재계산
         state.loaded = true;
         return;
       }
@@ -54,6 +95,7 @@ async function load() {
     state.employees = data.employees || [];
     state.attendance = data.attendance || [];
     state.trips = data.trips || [];
+    recomputeAllAttendance();  // 08:15 규칙으로 재계산
     state.loaded = true;
     save();
   } catch (e) {
@@ -195,11 +237,8 @@ async function importAttendance(file) {
       if (!date) continue;
       const cin = normTime(row[idx.cin]);
       const cout = normTime(row[idx.cout]);
-      let late = 0;
-      if (idx.late !== undefined) {
-        const n = Number(row[idx.late]);
-        if (!isNaN(n)) late = n;
-      }
+      // 08:15 규칙으로 지각 계산 (엑셀의 Late 컬럼 무시)
+      const late = computeLateMinutes(cin);
       let status = "NORMAL";
       if (late > 0) status = "LATE";
       if (!cin && !cout) status = "ABSENT";
@@ -1020,55 +1059,4 @@ function viewReports() {
             `;
           }).join("")}
         </tbody>
-      </table></div>
-    </div>
-  `;
-}
-
-function doughnut(counts, total, colors) {
-  const entries = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-  if (total === 0) return empty("데이터 없음");
-
-  // Build SVG donut
-  const r = 45, cx = 60, cy = 60;
-  const c = 2 * Math.PI * r;
-  let offset = 0;
-  const paths = entries.map(([k, v]) => {
-    const frac = v / total;
-    const dash = frac * c;
-    const color = colors[k] || "#94a3b8";
-    const el = `<circle r="${r}" cx="${cx}" cy="${cy}" fill="transparent" stroke="${color}" stroke-width="18" stroke-dasharray="${dash} ${c}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" />`;
-    offset += dash;
-    return el;
-  }).join("");
-
-  const legend = entries.map(([k, v]) => {
-    const pct = ((v / total) * 100).toFixed(1);
-    const color = colors[k] || "#94a3b8";
-    return `
-      <div class="legend-item">
-        <div><span class="legend-dot" style="background:${color}"></span>${k}</div>
-        <b>${v.toLocaleString()} (${pct}%)</b>
-      </div>
-    `;
-  }).join("");
-
-  return `
-    <div class="doughnut-wrap">
-      <svg class="doughnut" viewBox="0 0 120 120">${paths}</svg>
-      <div class="doughnut-legend">${legend}</div>
-    </div>
-  `;
-}
-
-// ==========================================================================
-// Boot
-// ==========================================================================
-(async function() {
-  try {
-    await load();
-    render();
-  } catch (e) {
-    console.error("Boot failed:", e);
-  }
-})();
+ 
