@@ -498,11 +498,23 @@ function viewOverview() {
   const empByDept = {};
   state.employees.forEach(e => { empByDept[e.department] = (empByDept[e.department] || 0) + 1; });
 
-  const lateByPerson = {};
+  // 부서별 지각 Top 5 (누적)
+  const lateByDeptPerson = {}; // { dept: { person_id: count } }
   state.attendance.forEach(a => {
-    if (a.status === "LATE") lateByPerson[a.person_id] = (lateByPerson[a.person_id] || 0) + 1;
+    if (a.status !== "LATE") return;
+    const dept = a.department || "미지정";
+    if (!lateByDeptPerson[dept]) lateByDeptPerson[dept] = {};
+    lateByDeptPerson[dept][a.person_id] = (lateByDeptPerson[dept][a.person_id] || 0) + 1;
   });
-  const topLate = Object.entries(lateByPerson).sort((a,b) => b[1] - a[1]).slice(0, 5);
+  // 부서별 Top 5 배열로 변환
+  const deptTopLate = Object.entries(lateByDeptPerson)
+    .map(([dept, personCounts]) => ({
+      dept,
+      isSCM: dept.toUpperCase().includes("SCM"),
+      top: Object.entries(personCounts).sort((a,b) => b[1] - a[1]).slice(0, 5),
+      totalDeptLate: Object.values(personCounts).reduce((s,n) => s + n, 0),
+    }))
+    .sort((a,b) => b.totalDeptLate - a.totalDeptLate);
 
   return `
     <div class="kpi-grid">
@@ -523,16 +535,32 @@ function viewOverview() {
       </div>
 
       <div class="card">
-        <h3>누적 지각 Top 5</h3>
-        ${topLate.length === 0 ? empty("지각 기록 없음") : `
-          <div class="bar-chart">
-            ${topLate.map(([pid, cnt]) => {
-              const emp = state.employees.find(e => e.person_id === pid);
+        <h3>부서별 누적 지각 Top 5</h3>
+        ${deptTopLate.length === 0 ? empty("지각 기록 없음") : `
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            ${deptTopLate.map(({dept, isSCM, top, totalDeptLate}) => {
+              if (top.length === 0) return "";
+              const maxCnt = top[0][1];
               return `
-                <div class="bar-row">
-                  <span class="bar-label ${emp && emp.is_scm ? "scm" : ""}">${escHTML(emp ? emp.name : pid)}</span>
-                  <div class="bar-track"><div class="bar-fill warn" style="width:${(cnt/topLate[0][1])*100}%"></div></div>
-                  <span class="bar-value">${cnt}회</span>
+                <div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                    <span style="font-size:12px; font-weight:600; ${isSCM ? "color:#4f46e5;" : "color:#475569;"}">
+                      ${escHTML(dept)}${isSCM ? " ⭐" : ""}
+                    </span>
+                    <span class="badge b-warn">총 ${totalDeptLate}회</span>
+                  </div>
+                  <div class="bar-chart">
+                    ${top.map(([pid, cnt]) => {
+                      const emp = state.employees.find(e => e.person_id === pid);
+                      return `
+                        <div class="bar-row">
+                          <span class="bar-label ${emp && emp.is_scm ? "scm" : ""}" style="width:110px; font-size:11px;">${escHTML(emp ? emp.name : pid)}</span>
+                          <div class="bar-track"><div class="bar-fill warn" style="width:${(cnt/maxCnt)*100}%"></div></div>
+                          <span class="bar-value" style="font-size:11px;">${cnt}회</span>
+                        </div>
+                      `;
+                    }).join("")}
+                  </div>
                 </div>
               `;
             }).join("")}
@@ -1060,53 +1088,4 @@ function viewReports() {
           }).join("")}
         </tbody>
       </table></div>
-    </div>
-  `;
-}
-
-function doughnut(counts, total, colors) {
-  const entries = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-  if (total === 0) return empty("데이터 없음");
-
-  const r = 45, cx = 60, cy = 60;
-  const c = 2 * Math.PI * r;
-  let offset = 0;
-  const paths = entries.map(([k, v]) => {
-    const frac = v / total;
-    const dash = frac * c;
-    const color = colors[k] || "#94a3b8";
-    const el = `<circle r="${r}" cx="${cx}" cy="${cy}" fill="transparent" stroke="${color}" stroke-width="18" stroke-dasharray="${dash} ${c}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" />`;
-    offset += dash;
-    return el;
-  }).join("");
-
-  const legend = entries.map(([k, v]) => {
-    const pct = ((v / total) * 100).toFixed(1);
-    const color = colors[k] || "#94a3b8";
-    return `
-      <div class="legend-item">
-        <div><span class="legend-dot" style="background:${color}"></span>${k}</div>
-        <b>${v.toLocaleString()} (${pct}%)</b>
-      </div>
-    `;
-  }).join("");
-
-  return `
-    <div class="doughnut-wrap">
-      <svg class="doughnut" viewBox="0 0 120 120">${paths}</svg>
-      <div class="doughnut-legend">${legend}</div>
-    </div>
-  `;
-}
-
-// ==========================================================================
-// Boot
-// ==========================================================================
-(async function() {
-  try {
-    await load();
-    render();
-  } catch (e) {
-    console.error("Boot failed:", e);
-  }
-})();
+   
