@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v28";  // v28: 캘린더 부서별 필터 (전체/SCM/각 부서)
+const STORAGE_KEY = "vn-office-v29";  // v29: 근태·연차 탭에 부서별 필터 추가 (휴가 이력 · 담당자별 요약)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1167,21 +1167,28 @@ function renderLeavesTab() {
   const allLeaves = [...(state.leaves || []), ...autoGenerateBTLeaves()];
   const months = ["ALL", ...new Set(allLeaves.map(l => (l.date || "").slice(0,7)).filter(Boolean))].sort().reverse();
   const types = ["ALL", ...Object.keys(LEAVE_TYPES)];
+  const depts = ["ALL", ...new Set(state.employees.map(e => e.department).filter(Boolean))].sort();
 
   if (!months.includes(state.filter_month)) state.filter_month = "ALL";
   const activeType = state.filter_leave_type || "ALL";
+  if (!state.filter_dept || !depts.includes(state.filter_dept)) state.filter_dept = "ALL";
+
+  // 부서 lookup (name -> dept)
+  const empDept = {};
+  state.employees.forEach(e => { empDept[e.name] = e.department || ""; });
 
   let filtered = allLeaves.filter(l => {
     if (state.filter_month !== "ALL" && !(l.date || "").startsWith(state.filter_month)) return false;
     if (activeType !== "ALL" && l.type !== activeType) return false;
+    if (state.filter_dept !== "ALL" && empDept[l.name] !== state.filter_dept) return false;
     return true;
   });
   filtered.sort((a,b) => (b.date || "").localeCompare(a.date || ""));
 
-  // 통계: 타입별 카운트
+  // 통계: 타입별 카운트 (부서 필터 반영)
   const typeCounts = {};
   Object.keys(LEAVE_TYPES).forEach(t => typeCounts[t] = 0);
-  allLeaves.filter(l => l.status === "APPROVED").forEach(l => {
+  allLeaves.filter(l => l.status === "APPROVED" && (state.filter_dept === "ALL" || empDept[l.name] === state.filter_dept)).forEach(l => {
     if (typeCounts[l.type] !== undefined) typeCounts[l.type] += (l.days || leaveInfo(l.type).days);
   });
 
@@ -1203,7 +1210,11 @@ function renderLeavesTab() {
     </div>
 
     <div class="card mt-3">
-      <div class="chip-label">월</div>
+      <div class="chip-label">부서</div>
+      <div class="chips">
+        ${depts.map(d => `<button class="chip ${state.filter_dept === d ? "active" : ""}" onclick="state.filter_dept='${escHTML(d)}'; render();">${d === "ALL" ? "전체" : escHTML(d)}</button>`).join("")}
+      </div>
+      <div class="chip-label mt-2">월</div>
       <div class="chips">
         ${months.map(m => `<button class="chip ${state.filter_month === m ? "active" : ""}" onclick="state.filter_month='${m}'; render();">${m === "ALL" ? "전체" : m}</button>`).join("")}
       </div>
@@ -1245,7 +1256,10 @@ function renderLeavesTab() {
 // ===== 담당자별 요약 탭 =====
 function renderAttendanceSummary() {
   const allLeaves = [...(state.leaves || []), ...autoGenerateBTLeaves()];
-  const rows = state.employees.map(e => {
+  const depts = ["ALL", ...new Set(state.employees.map(e => e.department).filter(Boolean))].sort();
+  if (!state.filter_dept || !depts.includes(state.filter_dept)) state.filter_dept = "ALL";
+  const empList = state.filter_dept === "ALL" ? state.employees : state.employees.filter(e => e.department === state.filter_dept);
+  const rows = empList.map(e => {
     const att = state.attendance.filter(a => a.person_id === e.person_id);
     const late = att.filter(a => a.status === "LATE").length;
     const absent = att.filter(a => a.status === "ABSENT").length;
@@ -1261,8 +1275,15 @@ function renderAttendanceSummary() {
   }).sort((a,b) => (b.late+b.absent) - (a.late+a.absent));
 
   return `
+    <div class="card mt-3">
+      <div class="chip-label">부서</div>
+      <div class="chips">
+        ${depts.map(d => `<button class="chip ${state.filter_dept === d ? "active" : ""}" onclick="state.filter_dept='${escHTML(d)}'; render();">${d === "ALL" ? "전체" : escHTML(d)} ${d !== "ALL" ? `(${state.employees.filter(x => x.department === d).length})` : ""}</button>`).join("")}
+      </div>
+    </div>
+
     <div class="card mt-3" style="background:#eff6ff; border-color:#bfdbfe; padding:10px 14px; font-size:12px; color:#1e3a8a;">
-      ℹ️ <b>잔여 연차</b> = 부여 - (AL + AL/2 × 0.5). 휴가 이력이 아직 없으면 기존 baseline 값(2026-06 기준) 을 표시.
+      ℹ️ <b>잔여 연차</b> = 부여 - (AL + AL/2 × 0.5). 휴가 이력이 아직 없으면 기존 baseline 값(2026-06 기준) 을 표시. 표시 인원: <b>${rows.length}명</b>
     </div>
 
     <div class="card mt-3" style="padding:0;">
