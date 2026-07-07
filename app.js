@@ -1088,4 +1088,53 @@ function viewReports() {
           }).join("")}
         </tbody>
       </table></div>
-   
+    </div>
+  `;
+}
+
+function doughnut(counts, total, colors) {
+  const entries = Object.entries(counts).sort((a,b) => b[1] - a[1]);
+  if (total === 0) return empty("데이터 없음");
+
+  const r = 45, cx = 60, cy = 60;
+  const c = 2 * Math.PI * r;
+  let offset = 0;
+  const paths = entries.map(([k, v]) => {
+    const frac = v / total;
+    const dash = frac * c;
+    const color = colors[k] || "#94a3b8";
+    const el = `<circle r="${r}" cx="${cx}" cy="${cy}" fill="transparent" stroke="${color}" stroke-width="18" stroke-dasharray="${dash} ${c}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" />`;
+    offset += dash;
+    return el;
+  }).join("");
+
+  const legend = entries.map(([k, v]) => {
+    const pct = ((v / total) * 100).toFixed(1);
+    const color = colors[k] || "#94a3b8";
+    return `
+      <div class="legend-item">
+        <div><span class="legend-dot" style="background:${color}"></span>${k}</div>
+        <b>${v.toLocaleString()} (${pct}%)</b>
+      </div>
+    `;
+  }).join("");
+
+  return `
+    <div class="doughnut-wrap">
+      <svg class="doughnut" viewBox="0 0 120 120">${paths}</svg>
+      <div class="doughnut-legend">${legend}</div>
+    </div>
+  `;
+}
+
+// ==========================================================================
+// Boot
+// ==========================================================================
+(async function() {
+  try {
+    await load();
+    render();
+  } catch (e) {
+    console.error("Boot failed:", e);
+  }
+})();
