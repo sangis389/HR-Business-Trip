@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v12";  // v12: 연차 잔여 공식 정정 (June 잔여 + 미래 6개월 + Top9 보너스)
+const STORAGE_KEY = "vn-office-v13";  // v13: Timesheet BT 23건 SCM 출장 반영
 const PAGE_SIZE = 50;
 
 // ==========================================================================
