@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v25";  // v25: 근태·연차 통합 (3탭) + Leave Type 분류 (AL/AL2/UP/PL/SL/MN 등)
+const STORAGE_KEY = "vn-office-v26";  // v26: 출장 결과보고 자동 드롭존 (Report 시트 인식 · 트립 병합/신규)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -273,14 +273,182 @@ async function importAttendance(file) {
   }
 }
 
+// 결과 텍스트 → 상태 분류
+function classifyHotelResult(text) {
+  const t = (text || "").toLowerCase();
+  if (!t) return "PENDING";
+  if (/done|setup|set up|signed|confirmed|updated|sign up|go live/.test(t)) return "DONE";
+  if (/sent email|requested|reminded|pushed|propos|submitted|received/.test(t)) return "REQUESTED";
+  if (/in discussing|in progress|under review|under consider|reviewing|being updated|keep updated|keep follow/.test(t)) return "IN_PROGRESS";
+  if (/not support|reject|declined|not agree/.test(t)) return "REJECTED";
+  return "PENDING";
+}
+
+// Report 시트 → hotels[] 파싱
+function parseReportSheet(sheet) {
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
+  if (rows.length < 2) return [];
+  // 헤더 행 찾기 (첫 3행 중 "hotel" 포함)
+  let headerRow = 0;
+  for (let r = 0; r < Math.min(3, rows.length); r++) {
+    const joined = rows[r].join(" ").toLowerCase();
+    if (joined.includes("hotel") && (joined.includes("contract") || joined.includes("contact") || joined.includes("purpose") || joined.includes("meeting") || joined.includes("follow"))) {
+      headerRow = r; break;
+    }
+  }
+  const header = rows[headerRow].map(h => String(h).toLowerCase());
+  const findCol = (...kws) => header.findIndex(h => kws.every(kw => h.includes(kw)));
+  let col_hotel = header.findIndex(h => h.includes("hotel") && h.includes("name"));
+  if (col_hotel < 0) col_hotel = header.findIndex(h => h.includes("hotel"));
+  if (col_hotel < 0) col_hotel = 0;
+  const col_contract = findCol("contract");
+  const col_contact = findCol("contact") >= 0 ? findCol("contact") : findCol("person") >= 0 ? findCol("person") : findCol("pic");
+  const col_purpose = findCol("purpose");
+  const col_summary = findCol("meeting");
+  const col_follow = findCol("follow");
+  const col_1w = findCol("week");
+  const col_1m = findCol("month");
+
+  const hotels = [];
+  for (let r = headerRow + 1; r < rows.length; r++) {
+    const row = rows[r];
+    const hotel = String(row[col_hotel] || "").trim();
+    if (!hotel || hotel.length < 3) continue;
+    if (hotel.toLowerCase().startsWith("overall")) continue;
+    const h = {
+      hotel,
+      contract: col_contract >= 0 ? String(row[col_contract] || "").trim() : "",
+      contact:  col_contact >= 0 ? String(row[col_contact] || "").trim() : "",
+      purpose:  col_purpose >= 0 ? String(row[col_purpose] || "").trim() : "",
+      summary:  col_summary >= 0 ? String(row[col_summary] || "").trim() : "",
+      followup: col_follow >= 0 ? String(row[col_follow] || "").trim() : "",
+      result_1w: col_1w >= 0 ? String(row[col_1w] || "").trim() : "",
+      result_1m: col_1m >= 0 ? String(row[col_1m] || "").trim() : "",
+    };
+    h.status = classifyHotelResult(h.result_1w || h.followup || h.summary);
+    hotels.push(h);
+  }
+  return hotels;
+}
+
+// Expense 시트에서 Total 값 추출 (VND)
+function parseExpenseTotal(sheet) {
+  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
+  for (const row of rows) {
+    for (let c = 0; c < row.length; c++) {
+      const v = String(row[c] || "").toLowerCase().trim();
+      if (v === "total" || v === "grand total") {
+        for (let c2 = c + 1; c2 < row.length; c2++) {
+          const raw = row[c2];
+          const num = typeof raw === "number" ? raw : parseInt(String(raw).replace(/[^\d]/g, ""));
+          if (!isNaN(num) && num > 100000) return num;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+// 파일명에서 담당자 · 기간 · 목적지 추출
+function parseTripFilename(fname) {
+  const base = fname.replace(/\.xlsx?$/i, "").replace(/_/g, " ");
+  const result = { employee: "", start: "", end: "", destination: "" };
+
+  // 담당자: "- Andy" 또는 "Anna" 등 파일명 뒤쪽 또는 "_Anna" 형태
+  const empMatch = base.match(/[-_]\s*([A-Za-z]+)\s*[.!]*\s*$/) || base.match(/\b(Anna|Andy|Mike|Nhi|Lukas|Hanny|Aerum|DK|Slena|Thu|Yoo|Sang)\b/i);
+  if (empMatch) result.employee = empMatch[1];
+
+  // 날짜: "13 - 15 Jan", "17.3 - 19.3", "26-28 May 2026", "(12- 14 May 25)" 등
+  const monthNames = { jan:"01", feb:"02", mar:"03", apr:"04", may:"05", jun:"06", jul:"07", aug:"08", sep:"09", oct:"10", nov:"11", dec:"12" };
+  // Pattern: DD - DD Mon YYYY
+  const p1 = base.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})\s+(\w{3})\s*(\d{2,4})?/i);
+  if (p1) {
+    const d1 = p1[1].padStart(2,"0"), d2 = p1[2].padStart(2,"0");
+    const mo = monthNames[p1[3].toLowerCase().slice(0,3)];
+    let yr = p1[4] || "2026";
+    if (yr.length === 2) yr = "20" + yr;
+    if (yr === "2025") yr = "2026";  // 파일명 오타 보정
+    if (mo) {
+      result.start = `${yr}-${mo}-${d1}`;
+      result.end = `${yr}-${mo}-${d2}`;
+    }
+  }
+  // Pattern: DD.M - DD.M (한국식)
+  if (!result.start) {
+    const p2 = base.match(/(\d{1,2})\.(\d{1,2})\s*[-–]\s*(\d{1,2})\.(\d{1,2})/);
+    if (p2) {
+      const yr = "2026";
+      result.start = `${yr}-${p2[2].padStart(2,"0")}-${p2[1].padStart(2,"0")}`;
+      result.end = `${yr}-${p2[4].padStart(2,"0")}-${p2[3].padStart(2,"0")}`;
+    }
+  }
+  // Pattern: (02-03 Jun 2026)
+  if (!result.start) {
+    const p3 = base.match(/(\d{1,2})[-–](\d{1,2})\s+(\w{3})\s*(\d{4})?/i);
+    if (p3) {
+      const mo = monthNames[p3[3].toLowerCase().slice(0,3)];
+      const yr = p3[4] || "2026";
+      if (mo) {
+        result.start = `${yr}-${mo}-${p3[1].padStart(2,"0")}`;
+        result.end = `${yr}-${mo}-${p3[2].padStart(2,"0")}`;
+      }
+    }
+  }
+  // 목적지 힌트: 파일명 앞부분에서 도시 이름 추출
+  const cities = ["Hanoi","Ha Noi","HCM","Ho Chi Minh","Da Nang","Danang","Da Lat","Dalat","Quy Nhon","Hoi An","Phan Thiet","Phu Quoc","Ha Long","Halong","Nha Trang"];
+  for (const c of cities) {
+    if (base.toLowerCase().includes(c.toLowerCase().replace(/\s/g,""))) { result.destination = c.replace(/^Ha Noi$/i,"Hanoi").replace(/^HCM$/i,"Ho Chi Minh").replace(/^Danang$/i,"Da Nang").replace(/^Dalat$/i,"Da Lat").replace(/^Halong$/i,"Ha Long"); break; }
+    if (base.includes(c)) { result.destination = c; break; }
+  }
+  return result;
+}
+
+// SCM 직원 리스트에서 매칭
+function matchEmployee(nameHint) {
+  if (!nameHint) return null;
+  const hint = nameHint.toLowerCase().trim();
+  const emps = state.employees.filter(e => e.is_scm);
+  // 1) 닉네임 완전 일치
+  const nickHit = emps.find(e => {
+    const nick = nickOnly(e.name).toLowerCase();
+    return nick === hint;
+  });
+  if (nickHit) return nickHit.name;
+  // 2) 이름 부분 일치
+  const partHit = emps.find(e => e.name.toLowerCase().includes(hint));
+  if (partHit) return partHit.name;
+  // 3) Lukas 예외 케이스
+  if (hint === "lukas") {
+    const l = emps.find(e => e.name.includes("Lukas"));
+    if (l) return l.name;
+  }
+  // 4) Sang Yoo / Yoo
+  if (["sang", "yoo"].includes(hint)) {
+    const y = emps.find(e => e.name.includes("Yoo") || e.name === "Sang Yoo");
+    if (y) return y.name;
+  }
+  return null;
+}
+
 async function importTripPlan(file) {
   try {
     const scmEmps = state.employees.filter(e => e.is_scm);
     if (scmEmps.length === 0) { alert("SCM 인원이 먼저 등록되어 있어야 합니다."); return; }
 
     const wb = await readWorkbook(file);
-    const expenseSheet = wb.SheetNames.find(n => /expense/i.test(n));
-    const reportSheet = wb.SheetNames.find(n => /report/i.test(n));
+    const expenseSheet = wb.SheetNames.find(n => /expense|application for expense/i.test(n));
+    const reportSheet = wb.SheetNames.find(n => /^report$/i.test(n)) || wb.SheetNames.find(n => /report/i.test(n));
+
+    // ▶ Recap 자동 처리 경로: Report 시트가 있으면 결과보고로 처리
+    if (reportSheet) {
+      const hotels = parseReportSheet(wb.Sheets[reportSheet]);
+      // 호텔이 5개 이상이면 결과보고 확정
+      if (hotels.length >= 3) {
+        return await importTripRecap(file, wb, hotels, expenseSheet);
+      }
+    }
+
+    // ▼ 기존 계획서 경로 (Report 없거나 호텔 <3)
 
     const trip = {
       title: file.name.replace(/\.xlsx?$/i, ""),
@@ -1133,6 +1301,125 @@ function renderAttendanceSummary() {
   `;
 }
 
+// ==========================================================================
+// 출장 결과보고 (Recap) 자동 임포트: Report + Expense 파싱 → 기존 트립 병합 or 신규 생성
+// ==========================================================================
+async function importTripRecap(file, wb, hotels, expenseSheet) {
+  const parsed = parseTripFilename(file.name);
+  const empMatched = matchEmployee(parsed.employee);
+  const expenseVnd = expenseSheet ? parseExpenseTotal(wb.Sheets[expenseSheet]) : null;
+
+  // 통계
+  const done = hotels.filter(h => h.status === "DONE").length;
+  const inprog = hotels.filter(h => h.status === "IN_PROGRESS").length;
+  const req = hotels.filter(h => h.status === "REQUESTED").length;
+  const pend = hotels.filter(h => h.status === "PENDING").length;
+  const rej = hotels.filter(h => h.status === "REJECTED").length;
+  const newContracts = hotels.filter(h => /new/i.test((h.contract || "") + (h.purpose || ""))).length;
+  const outcome = `방문 호텔 ${hotels.length}곳 · Done ${done} · In discussing ${inprog} · Requested ${req} · Rejected ${rej} · Pending ${pend} · 신규계약 시도 ${newContracts}`;
+
+  // 기존 트립 매칭 (담당자 + 시작일 ±2일)
+  let matchedTrip = null;
+  if (empMatched && parsed.start) {
+    const startD = new Date(parsed.start);
+    matchedTrip = state.trips.find(t => {
+      if (t.employee !== empMatched) return false;
+      if (!t.start_date) return false;
+      const ts = new Date(t.start_date);
+      const diff = Math.abs((ts - startD) / 86400000);
+      return diff <= 2;
+    });
+  }
+
+  const scmEmps = state.employees.filter(e => e.is_scm && e.is_scm_traveler !== false);
+  const empOpts = scmEmps.map(e =>
+    `<option value="${escHTML(e.name)}" ${(matchedTrip?.employee || empMatched) === e.name ? "selected" : ""}>${escHTML(nickOnly(e.name))} — ${escHTML(e.name)}</option>`
+  ).join("");
+
+  const modeLabel = matchedTrip ? `🔗 기존 트립 병합 (#${matchedTrip.id})` : "🆕 신규 트립 생성";
+  const modeColor = matchedTrip ? "#4f46e5" : "#16a34a";
+
+  showModal("🏨 출장 결과보고 자동 인식", `
+    <div style="padding:10px 14px; background:${modeColor}15; border:1px solid ${modeColor}40; border-radius:8px; margin-bottom:12px;">
+      <div style="font-size:12px; color:${modeColor}; font-weight:700;">${modeLabel}</div>
+      <div style="font-size:11px; color:#64748b; margin-top:2px;">${escHTML(file.name)}</div>
+    </div>
+
+    <div class="grid-2">
+      <div><label class="field-label">담당자</label><select id="rc_emp"><option value="">선택</option>${empOpts}</select></div>
+      <div><label class="field-label">목적지</label><input id="rc_dest" value="${escHTML(matchedTrip?.destination || parsed.destination ? (parsed.destination + ", VN") : "")}" /></div>
+    </div>
+    <div class="grid-2">
+      <div><label class="field-label">시작일</label><input id="rc_start" type="date" value="${matchedTrip?.start_date || parsed.start || ""}" /></div>
+      <div><label class="field-label">종료일</label><input id="rc_end" type="date" value="${matchedTrip?.end_date || parsed.end || ""}" /></div>
+    </div>
+    <div class="grid-2">
+      <div><label class="field-label">경비 (VND)</label><input id="rc_exp" type="number" value="${expenseVnd || matchedTrip?.expense_vnd || 0}" /></div>
+      <div><label class="field-label">상태</label><select id="rc_status">${["COMPLETED","IN_PROGRESS","APPROVED"].map(s => `<option ${(matchedTrip?.status || "COMPLETED")===s?"selected":""}>${s}</option>`).join("")}</select></div>
+    </div>
+
+    <div style="margin-top:12px; padding:10px; background:#f8fafc; border-radius:8px; border:1px solid #e2e8f0;">
+      <div style="font-size:12px; font-weight:700; margin-bottom:6px;">📊 파싱 요약</div>
+      <div style="font-size:11px; color:#475569;">
+        <div>🏨 방문 호텔: <b>${hotels.length}곳</b></div>
+        <div style="margin-top:4px; display:flex; gap:6px; flex-wrap:wrap;">
+          <span style="padding:2px 8px; border-radius:4px; background:#16a34a20; color:#16a34a; font-weight:600;">Done ${done}</span>
+          <span style="padding:2px 8px; border-radius:4px; background:#3b82f620; color:#3b82f6; font-weight:600;">In discussing ${inprog}</span>
+          <span style="padding:2px 8px; border-radius:4px; background:#f59e0b20; color:#f59e0b; font-weight:600;">Requested ${req}</span>
+          <span style="padding:2px 8px; border-radius:4px; background:#dc262620; color:#dc2626; font-weight:600;">Rejected ${rej}</span>
+          <span style="padding:2px 8px; border-radius:4px; background:#94a3b820; color:#94a3b8; font-weight:600;">Pending ${pend}</span>
+        </div>
+        <div style="margin-top:6px;">🆕 신규 계약 시도: <b>${newContracts}건</b>${expenseVnd ? ` · 💰 ${expenseVnd.toLocaleString()} VND` : ""}</div>
+      </div>
+      <div style="margin-top:8px; font-size:10px; color:#94a3b8; max-height:80px; overflow-y:auto;">
+        ${hotels.slice(0,10).map(h => escHTML(h.hotel)).join(" · ")}${hotels.length > 10 ? ` … 외 ${hotels.length-10}` : ""}
+      </div>
+    </div>
+  `, () => {
+    const emp = val("rc_emp");
+    if (!emp) { alert("담당자를 선택하세요."); return false; }
+    const dest = val("rc_dest");
+    const start = val("rc_start");
+    const end = val("rc_end");
+    const exp = +val("rc_exp") || null;
+    const status = val("rc_status");
+    if (matchedTrip) {
+      matchedTrip.employee = emp;
+      matchedTrip.destination = dest;
+      matchedTrip.start_date = start;
+      matchedTrip.end_date = end;
+      matchedTrip.status = status;
+      matchedTrip.hotels = hotels;
+      matchedTrip.expense_vnd = exp;
+      matchedTrip.cost_planned = exp || 0;
+      matchedTrip.cost_actual = exp || 0;
+      matchedTrip.source_file = file.name;
+      matchedTrip.outcome = outcome;
+    } else {
+      const nextId = state.trips.length ? Math.max(...state.trips.map(t => t.id)) + 1 : 1;
+      const destShortName = (dest || "Biz Trip").replace(/,.*$/,"").trim();
+      state.trips.push({
+        id: nextId,
+        title: `${destShortName} · ${start} (${end && start ? Math.round((new Date(end)-new Date(start))/86400000)+1 : 1}일)`,
+        employee: emp,
+        destination: dest,
+        start_date: start, end_date: end,
+        purpose: "SCM Business Trip",
+        status,
+        cost_planned: exp || 0, cost_actual: exp || 0, currency: "VND",
+        partners: [], itinerary: [],
+        hotels, expense_vnd: exp,
+        source_file: file.name,
+        outcome,
+        roi: null, notes: "",
+      });
+    }
+    save(); render();
+    setTimeout(() => alert(`${matchedTrip ? "결과보고 병합" : "결과보고 신규 등록"} 완료 · 방문 호텔 ${hotels.length}곳`), 100);
+    return true;
+  });
+}
+
 function dropzone(kind, label) {
   const handler = kind === "attendance" ? "handleAttFile" : "handleTripFile";
   return `
@@ -1406,7 +1693,7 @@ function viewTrips() {
     </div>
 
     <div class="mt-3">
-      ${dropzone("tripplan", "출장 계획서 엑셀 드래그")}
+      ${dropzone("tripplan", "출장 계획서 또는 결과보고 엑셀 드래그 (자동 인식)")}
     </div>
 
     <div class="card mt-3">
@@ -1439,7 +1726,7 @@ function viewTrips() {
             <div class="kanban-body">
               ${trips.length === 0 ? `<div class="empty" style="padding:12px; font-size:11px;">없음</div>` :
                 trips.map(t => {
-                  const pCount = (t.partners || []).length;
+                            const pCount = (t.partners || []).length;
                   const pVisited = (t.partners || []).filter(p => p.visited).length;
                   const sym = curSym(t.currency);
                   return `
@@ -1468,24 +1755,19 @@ function viewTrips() {
   `;
 }
 
-// Read-only trip detail viewer (수기 편집 기능 제거됨)
 function editTrip(id) {
   const trip = state.trips.find(t => t.id === id);
   if (!trip) return;
-
   const partners = trip.partners || [];
   const itinerary = trip.itinerary || [];
   const cur = trip.currency || "USD";
-
   const row = (label, value) => `
     <div style="display:flex; padding:6px 0; border-bottom:1px solid #f1f5f9; font-size:13px;">
       <div style="width:110px; color:#64748b; font-size:12px;">${label}</div>
       <div style="flex:1;">${value}</div>
     </div>`;
-
   showModalReadOnly(`SCM 출장 상세 #${trip.id}`, `
     <div style="font-size:16px; font-weight:600; margin-bottom:10px;">${escHTML(trip.title || "—")}</div>
-
     ${row("담당자", escHTML(nickOnly(trip.employee) || "—"))}
     ${row("목적지", escHTML(trip.destination || "—"))}
     ${row("기간", `${trip.start_date || "—"} ~ ${trip.end_date || "—"}`)}
@@ -1494,41 +1776,11 @@ function editTrip(id) {
     ${row("예산", `${curSym(cur)}${fmt(trip.cost_planned)} ${cur}`)}
     ${row("실지출", `${curSym(cur)}${fmt(trip.cost_actual)} ${cur}`)}
     ${trip.roi != null ? row("실제 ROI", `<b>${trip.roi.toFixed(1)}x</b>`) : ""}
-
-    ${itinerary.length > 0 ? `
-      <div class="card" style="padding:10px; background:#f8fafc; margin-top:14px;">
-        <div style="font-size:11px; font-weight:600; margin-bottom:6px;">🗓️ 일정</div>
-        <div style="font-size:12px; color:#475569;">
-          ${itinerary.map(d => `<div style="padding:2px 0;"><b>${escHTML(d.day)}</b> · ${escHTML(d.note)}</div>`).join("")}
-        </div>
-      </div>
-    ` : ""}
-
-    ${partners.length > 0 ? `
-      <div style="margin-top:14px;">
-        <div style="font-size:11px; font-weight:600; margin-bottom:6px;">🏨 방문 파트너 (${partners.length})</div>
-        <div class="partners-list">
-          ${partners.map(p => `
-            <div class="partner-row">
-              <div style="width:20px; text-align:center; font-size:14px;">${p.visited ? "✓" : "·"}</div>
-              <div style="flex:1;">
-                <div class="partner-name">${escHTML(p.name)}</div>
-                <div class="partner-meta">${escHTML(p.district || "—")}${p.bookings_2026 ? ` · YTD ${p.bookings_2026} 예약` : ""}</div>
-              </div>
-              ${p.contract_signed ? '<span class="badge b-success">SIGNED</span>' : ""}
-            </div>
-          `).join("")}
-        </div>
-      </div>
-    ` : ""}
-
     ${trip.outcome ? `
       <div style="border-top:1px solid #e2e8f0; padding-top:12px; margin-top:14px;">
         <div style="font-size:11px; font-weight:600; margin-bottom:6px;">📋 출장 결과 요약</div>
         <div style="font-size:13px; color:#475569; white-space:pre-wrap;">${escHTML(trip.outcome)}</div>
-      </div>
-    ` : ""}
-
+      </div>` : ""}
     ${(trip.hotels && trip.hotels.length > 0) ? `
       <div style="margin-top:14px;">
         <div style="font-size:11px; font-weight:600; margin-bottom:6px; display:flex; align-items:center; gap:8px;">
@@ -1537,7 +1789,7 @@ function editTrip(id) {
         </div>
         <div style="max-height:420px; overflow:auto; border:1px solid #e2e8f0; border-radius:8px;">
           <table style="width:100%; font-size:11px; border-collapse:collapse;">
-            <thead style="position:sticky; top:0; background:#f8fafc; z-index:1;">
+            <thead style="position:sticky; top:0; background:#f8fafc;">
               <tr style="border-bottom:2px solid #e2e8f0;">
                 <th style="text-align:left; padding:6px 8px; width:26px;">#</th>
                 <th style="text-align:left; padding:6px 8px;">Hotel</th>
@@ -1552,8 +1804,7 @@ function editTrip(id) {
               ${trip.hotels.map((h, i) => {
                 const st = h.status || "PENDING";
                 const stColor = {DONE:"#16a34a", REQUESTED:"#f59e0b", IN_PROGRESS:"#3b82f6", REJECTED:"#dc2626", PENDING:"#94a3b8"}[st] || "#94a3b8";
-                return `
-                  <tr style="border-bottom:1px solid #f1f5f9; vertical-align:top;">
+                return `<tr style="border-bottom:1px solid #f1f5f9; vertical-align:top;">
                     <td style="padding:6px 8px; color:#94a3b8;">${i+1}</td>
                     <td style="padding:6px 8px;"><b>${escHTML(h.hotel || "")}</b>${h.contact ? `<div style="color:#94a3b8; font-size:10px; margin-top:2px;">${escHTML(h.contact)}</div>` : ""}</td>
                     <td style="padding:6px 8px; color:#475569;">${escHTML(h.contract || "—")}</td>
@@ -1561,22 +1812,18 @@ function editTrip(id) {
                     <td style="padding:6px 8px; color:#475569;">${escHTML((h.followup || "").slice(0, 80))}</td>
                     <td style="padding:6px 8px; color:#475569;">${escHTML((h.result_1w || "").slice(0, 60))}</td>
                     <td style="padding:6px 8px;"><span style="display:inline-block; padding:2px 6px; border-radius:4px; background:${stColor}20; color:${stColor}; font-size:10px; font-weight:600;">${st}</span></td>
-                  </tr>
-                `;
+                  </tr>`;
               }).join("")}
             </tbody>
           </table>
         </div>
         ${trip.source_file ? `<div style="font-size:10px; color:#94a3b8; margin-top:6px;">📎 원본 파일: ${escHTML(trip.source_file)}</div>` : ""}
-      </div>
-    ` : ""}
-
+      </div>` : ""}
     ${trip.notes ? `
       <div style="margin-top:12px;">
         <div style="font-size:11px; font-weight:600; margin-bottom:6px;">📝 노트</div>
         <div style="font-size:13px; color:#475569; white-space:pre-wrap;">${escHTML(trip.notes)}</div>
-      </div>
-    ` : ""}
+      </div>` : ""}
   `);
 }
 
@@ -1599,9 +1846,6 @@ function showModalReadOnly(title, body) {
   document.body.appendChild(div.firstElementChild);
 }
 
-// ==========================================================================
-// View: Reports
-// ==========================================================================
 function viewReports() {
   const monthly = ["2026-03","2026-04","2026-05","2026-06"].map(m => ({
     m,
@@ -1609,7 +1853,6 @@ function viewReports() {
     absent: state.attendance.filter(a => a.date && a.date.startsWith(m) && a.status === "ABSENT").length,
   }));
   const monthlyMax = Math.max(1, ...monthly.map(m => Math.max(m.late, m.absent)));
-
   const deptStats = {};
   state.attendance.forEach(a => {
     if (!a.department) return;
@@ -1618,79 +1861,49 @@ function viewReports() {
     if (a.status === "LATE") deptStats[a.department].late++;
     if (a.status === "ABSENT") deptStats[a.department].absent++;
   });
-
   const attStatus = {};
   state.attendance.forEach(a => { attStatus[a.status] = (attStatus[a.status] || 0) + 1; });
   const attTotal = state.attendance.length;
-
   const tripStatus = {};
   state.trips.forEach(t => { tripStatus[t.status] = (tripStatus[t.status] || 0) + 1; });
   const tripTotal = state.trips.length;
-
   const deptEmp = {};
   state.employees.forEach(e => { deptEmp[e.department] = (deptEmp[e.department] || 0) + 1; });
-
   return `
-    <div class="flex center gap-3">
-      <h2 style="margin:0; font-size:16px;">리포트</h2>
-    </div>
-
+    <div class="flex center gap-3"><h2 style="margin:0; font-size:16px;">리포트</h2></div>
     <div class="grid-2 mt-4">
-      <div class="card">
-        <h3>월별 지각/결근</h3>
-        <div style="padding:12px;">
-          ${monthly.map(m => `
-            <div style="margin-bottom:10px;">
-              <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;">
-                <b>${m.m}</b>
-                <span style="color:#94a3b8;">지각 ${m.late} · 결근 ${m.absent}</span>
-              </div>
-              <div style="display:flex; gap:2px; height:16px;">
-                <div style="flex:${m.late}; background:#f59e0b; border-radius:2px;"></div>
-                <div style="flex:${m.absent}; background:#ef4444; border-radius:2px;"></div>
-                <div style="flex:${Math.max(0, monthlyMax - m.late - m.absent)}; background:#f1f5f9;"></div>
-              </div>
+      <div class="card"><h3>월별 지각/결근</h3>
+        <div style="padding:12px;">${monthly.map(m => `
+          <div style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;"><b>${m.m}</b><span style="color:#94a3b8;">지각 ${m.late} · 결근 ${m.absent}</span></div>
+            <div style="display:flex; gap:2px; height:16px;">
+              <div style="flex:${m.late}; background:#f59e0b; border-radius:2px;"></div>
+              <div style="flex:${m.absent}; background:#ef4444; border-radius:2px;"></div>
+              <div style="flex:${Math.max(0, monthlyMax - m.late - m.absent)}; background:#f1f5f9;"></div>
             </div>
-          `).join("")}
+          </div>`).join("")}
         </div>
       </div>
-
-      <div class="card">
-        <h3>근태 상태 분포</h3>
-        ${doughnut(attStatus, attTotal, { PRESENT: "#22c55e", NORMAL: "#22c55e", LATE: "#f59e0b", ABSENT: "#ef4444", LEAVE: "#3b82f6", HOLIDAY: "#94a3b8" })}
-      </div>
-
-      <div class="card">
-        <h3>부서별 인원</h3>
-        ${doughnut(deptEmp, state.employees.length, { "Office/SCM": "#4f46e5", "Office/PD": "#7c3aed", "KR Manager": "#0ea5e9", "Office": "#94a3b8" })}
-      </div>
-
-      <div class="card">
-        <h3>SCM 출장 상태</h3>
-        ${doughnut(tripStatus, tripTotal, { DRAFT: "#94a3b8", REQUESTED: "#f59e0b", APPROVED: "#3b82f6", IN_PROGRESS: "#22c55e", COMPLETED: "#0ea5e9", CANCELLED: "#ef4444" })}
-      </div>
+      <div class="card"><h3>근태 상태 분포</h3>${doughnut(attStatus, attTotal, { NORMAL: "#22c55e", PRESENT: "#22c55e", LATE: "#f59e0b", ABSENT: "#ef4444", LEAVE: "#3b82f6", HOLIDAY: "#94a3b8" })}</div>
+      <div class="card"><h3>부서별 인원</h3>${doughnut(deptEmp, state.employees.length, { "Office/SCM": "#4f46e5", "Office/PD": "#7c3aed", "KR Manager": "#0ea5e9", "Office": "#94a3b8" })}</div>
+      <div class="card"><h3>SCM 출장 상태</h3>${doughnut(tripStatus, tripTotal, { DRAFT: "#94a3b8", REQUESTED: "#f59e0b", APPROVED: "#3b82f6", IN_PROGRESS: "#22c55e", COMPLETED: "#0ea5e9", CANCELLED: "#ef4444" })}</div>
     </div>
-
-    <div class="card mt-4">
-      <h3>부서별 근태 요약</h3>
+    <div class="card mt-4"><h3>부서별 근태 요약</h3>
       <div class="table-wrap"><table>
         <thead><tr><th>부서</th><th class="right">총 근태</th><th class="right">지각</th><th class="right">결근</th><th class="right">지각률</th></tr></thead>
-        <tbody>
-          ${Object.entries(deptStats).sort((a,b) => (b[1].late/b[1].total) - (a[1].late/a[1].total)).map(([d, s]) => {
-            const rate = ((s.late / s.total) * 100).toFixed(1);
-            const isSCM = d.toUpperCase().includes("SCM");
-            return `<tr>
-                <td><b>${escHTML(d)}</b>${isSCM ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
-                <td class="right">${s.total.toLocaleString()}</td>
-                <td class="right ${s.late > 20 ? "text-late" : ""}">${s.late}</td>
-                <td class="right ${s.absent > 5 ? "text-absent" : ""}">${s.absent}</td>
-                <td class="right"><b>${rate}%</b></td>
-              </tr>`;
-          }).join("")}
-        </tbody>
+        <tbody>${Object.entries(deptStats).sort((a,b) => (b[1].late/b[1].total) - (a[1].late/a[1].total)).map(([d, s]) => {
+          const rate = ((s.late / s.total) * 100).toFixed(1);
+          const isSCM = d.toUpperCase().includes("SCM");
+          return `<tr>
+              <td><b>${escHTML(d)}</b>${isSCM ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
+              <td class="right">${s.total.toLocaleString()}</td>
+              <td class="right ${s.late > 20 ? "text-late" : ""}">${s.late}</td>
+              <td class="right ${s.absent > 5 ? "text-absent" : ""}">${s.absent}</td>
+              <td class="right"><b>${rate}%</b></td>
+            </tr>`;
+        }).join("")}</tbody>
       </table></div>
-    </div>
-  `;
+    </div>`;
 }
 
 function doughnut(counts, total, colors) {
