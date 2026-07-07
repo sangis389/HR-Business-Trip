@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v21";  // v21: Aerum Phu Quoc 출장 Recap 반영
+const STORAGE_KEY = "vn-office-v22";  // v22: 담당자 영문명 표시 + 매트릭스에 방문 지역 표기
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -388,6 +388,18 @@ function escHTML(s) {
 }
 function val(id) { return document.getElementById(id).value.trim(); }
 function fmt(n) { return (n || 0).toLocaleString(); }
+// 담당자 이름을 영문 닉네임만 표시 (예: "Le Thi Kim Anh (Aerum)" → "Aerum", "Yoo SangKyu" → "Yoo SangKyu")
+function nickOnly(name) {
+  const m = (name || "").match(/\(([^)]+)\)/);
+  return m ? m[1].trim() : (name || "").trim();
+}
+// 지역명을 짧게 (예: "Ho Chi Minh, VN" → "Ho Chi Minh", "TBD (Timesheet BT)" → "TBD")
+function destShort(dest) {
+  if (!dest) return "—";
+  let d = dest.replace(", VN", "").trim();
+  if (d.startsWith("TBD")) return "TBD";
+  return d;
+}
 function curSym(c) { return c === "VND" ? "₫" : c === "USD" ? "$" : c === "KRW" ? "₩" : ""; }
 
 function showModal(title, body, onSave, extraFooter = "") {
@@ -955,16 +967,18 @@ function renderTripAnalytics() {
   // 월 목록 (오름차순)
   const months = [...new Set(trips.map(t => (t.start_date||"").slice(0,7)).filter(Boolean))].sort();
 
-  // 담당자 × 월 매트릭스: 트립 수 + 호텔 수
+  // 담당자 × 월 매트릭스: 트립 수 + 호텔 수 + 방문 지역 리스트
   const matrix = {};
   trips.forEach(t => {
     const emp = t.employee || "?";
     const m = (t.start_date||"").slice(0,7);
     if (!m) return;
     if (!matrix[emp]) matrix[emp] = {};
-    if (!matrix[emp][m]) matrix[emp][m] = { trips: 0, hotels: 0 };
+    if (!matrix[emp][m]) matrix[emp][m] = { trips: 0, hotels: 0, dests: [] };
     matrix[emp][m].trips++;
     matrix[emp][m].hotels += (t.hotels || []).length;
+    const d = destShort(t.destination);
+    if (d && !matrix[emp][m].dests.includes(d)) matrix[emp][m].dests.push(d);
   });
 
   // 담당자 리스트 (트립 수 기준 정렬, SCM Head 우선)
@@ -989,7 +1003,7 @@ function renderTripAnalytics() {
     return "background:#3b82f6; color:#fff; font-weight:700;";
   };
 
-  const empShort = (name) => name.replace(/\s*\([^)]+\)/, "").trim();
+  const empShort = (name) => nickOnly(name);
   const nickOf = (name) => (name.match(/\(([^)]+)\)/) || [])[1] || "";
 
   return `
@@ -1032,7 +1046,7 @@ function renderTripAnalytics() {
         <div style="padding:8px 12px;">
           ${empRows.map(([emp, s]) => {
             const pct = Math.round(s.hotels / maxHotels * 100);
-            const shortName = empShort(emp);
+            const shortName = nickOnly(emp);
             const isHead = state.employees.find(e => e.name === emp)?.position === "SCM Head";
             return `
               <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; cursor:pointer;" onclick='setTripEmpFilter(${JSON.stringify(emp)})' title="${escHTML(emp)} · ${s.trips}건 · ${s.hotels}곳 · 클릭하면 필터">
@@ -1054,7 +1068,7 @@ function renderTripAnalytics() {
           <thead>
             <tr style="background:#f8fafc;">
               <th style="text-align:left; padding:8px 10px; border-bottom:2px solid #e2e8f0; position:sticky; left:0; background:#f8fafc; z-index:1;">담당자</th>
-              ${months.map(m => `<th style="text-align:center; padding:8px 6px; border-bottom:2px solid #e2e8f0; width:70px; font-weight:600;">${m.slice(5)}월</th>`).join("")}
+              ${months.map(m => `<th style="text-align:center; padding:8px 6px; border-bottom:2px solid #e2e8f0; width:90px; font-weight:600;">${m.slice(5)}월</th>`).join("")}
               <th style="text-align:center; padding:8px 10px; border-bottom:2px solid #e2e8f0; background:#eff6ff;">합계</th>
               <th style="text-align:center; padding:8px 10px; border-bottom:2px solid #e2e8f0; background:#eff6ff;">호텔</th>
             </tr>
@@ -1062,7 +1076,7 @@ function renderTripAnalytics() {
           <tbody>
             ${empList.map(emp => {
               const isHead = state.employees.find(e => e.name === emp)?.position === "SCM Head";
-              const shortName = empShort(emp);
+              const shortName = nickOnly(emp);
               const nick = nickOf(emp);
               const totalTr = byEmp[emp]?.trips || 0;
               const totalHo = byEmp[emp]?.hotels || 0;
@@ -1076,9 +1090,14 @@ function renderTripAnalytics() {
                     const cell = matrix[emp]?.[m];
                     const cnt = cell?.trips || 0;
                     const ho = cell?.hotels || 0;
+                    const dests = cell?.dests || [];
+                    const destStr = dests.join(", ");
                     return `<td style="text-align:center; padding:0; border:1px solid #f1f5f9;">
-                      <div style="${cellBg(cnt)} padding:8px 4px; cursor:pointer; font-size:11px;" onclick='setTripCellFilter(${JSON.stringify(emp)}, ${JSON.stringify(m)})' title="${escHTML(shortName)} · ${m} · ${cnt}건 · ${ho}곳">
-                        ${cnt > 0 ? `${cnt}${ho > 0 ? `<div style="font-size:9px; opacity:0.8;">${ho}곳</div>` : ""}` : '·'}
+                      <div style="${cellBg(cnt)} padding:6px 4px; cursor:pointer; font-size:11px; min-height:44px; display:flex; flex-direction:column; justify-content:center; align-items:center;" onclick='setTripCellFilter(${JSON.stringify(emp)}, ${JSON.stringify(m)})' title="${escHTML(shortName)} · ${m} · ${cnt}건 · ${ho}곳 · ${escHTML(destStr)}">
+                        ${cnt > 0 ? `
+                          <div style="font-weight:700;">${cnt}건${ho > 0 ? ` · ${ho}곳` : ""}</div>
+                          ${destStr ? `<div style="font-size:9px; opacity:0.85; margin-top:2px; line-height:1.1;">${escHTML(destStr)}</div>` : ""}
+                        ` : '·'}
                       </div>
                     </td>`;
                   }).join("")}
@@ -1156,7 +1175,7 @@ function viewTrips() {
       <div class="chips">
         ${tripEmployees.map(emp => {
           const cnt = emp === "ALL" ? state.trips.length : state.trips.filter(t => t.employee === emp).length;
-          const label = emp === "ALL" ? "전체" : emp.replace(/\s*\([^)]+\)/, ""); // 괄호 제거해서 짧게
+          const label = emp === "ALL" ? "전체" : nickOnly(emp);
           return `<button class="chip ${state.filter_trip_employee === emp ? "active" : ""}" onclick='setTripEmpFilter(${JSON.stringify(emp)})'>${escHTML(label)} (${cnt})</button>`;
         }).join("")}
       </div>
@@ -1195,7 +1214,7 @@ function viewTrips() {
                       ${(t.hotels && t.hotels.length > 0) ? `<div class="trip-card-meta" style="color:#0ea5e9; margin-top:4px;">🏨 방문 ${t.hotels.length}곳${t.expense_vnd ? ` · ${(t.expense_vnd/1000).toFixed(0)}k VND` : ""}</div>` : ""}
                       ${pCount > 0 ? `<div class="trip-card-meta" style="color:#4f46e5; margin-top:4px;">🏨 파트너 ${pVisited}/${pCount}</div>` : ""}
                       <div class="trip-card-footer">
-                        <span class="trip-card-owner truncate">${escHTML(t.employee)}</span>
+                        <span class="trip-card-owner truncate">${escHTML(nickOnly(t.employee))}</span>
                         <span class="trip-card-cost">${sym}${fmt(t.cost_planned)}</span>
                       </div>
                       ${t.status === "COMPLETED" && !t.outcome ? '<div class="badge b-warn mt-2">결과보고 대기</div>' : ""}
