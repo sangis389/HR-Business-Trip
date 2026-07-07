@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v7";  // v7: 퇴사자 Naomi, Stella 추가 삭제
+const STORAGE_KEY = "vn-office-v8";  // v8: 4명 닉네임 추가 (Holden, Mike, Vanessa, DK)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1144,6 +1144,4 @@ function doughnut(counts, total, colors) {
     await load();
     render();
   } catch (e) {
-    console.error("Boot failed:", e);
-  }
-})();
+    console.error("Boot failed:", e)
