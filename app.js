@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v15";  // v15: 대시보드 담당자별 출장 요약 카드
+const STORAGE_KEY = "vn-office-v16";  // v16: 담당자별 트립 필터 (대시보드 카드 클릭 연동)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -56,6 +56,7 @@ let state = {
   page_att: 1,
   late_tab: null,  // 대시보드 부서별 지각 Top 5 선택 탭
   filter_trip_month: "ALL",  // SCM 출장 월별 필터
+  filter_trip_employee: "ALL",  // SCM 출장 담당자 필터
   loaded: false,
 };
 
@@ -425,9 +426,24 @@ function go(view) {
   state.view = view;
   state.page_att = 1;
   render();
-  // Scroll content to top on view change
   const content = document.querySelector(".content");
   if (content) content.scrollTop = 0;
+}
+
+// 대시보드 담당자 카드에서 SCM 출장 → 특정 담당자 필터 세팅
+function goTripsFor(employeeName) {
+  state.filter_trip_month = "ALL";
+  state.filter_trip_employee = employeeName;
+  state.view = "trips";
+  render();
+  const content = document.querySelector(".content");
+  if (content) content.scrollTop = 0;
+}
+
+// 출장 화면에서 담당자 필터 변경
+function setTripEmpFilter(name) {
+  state.filter_trip_employee = name;
+  render();
 }
 
 function renderShell() {
@@ -629,7 +645,7 @@ function viewOverview() {
             ${summary.map(s => {
               const isHead = s.emp.position === "SCM Head";
               return `
-                <div style="border:1px solid #e2e8f0; border-radius:10px; padding:12px; background:#fff; cursor:pointer;" onclick="state.filter_trip_month='ALL'; go('trips');">
+                <div style="border:1px solid #e2e8f0; border-radius:10px; padding:12px; background:#fff; cursor:pointer;" onclick='goTripsFor(${JSON.stringify(s.emp.name)})'>
                   <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
                     <span style="font-size:13px; font-weight:600; color:${isHead ? '#4f46e5' : '#0f172a'};">
                       ${isHead ? '👑 ' : ''}${escHTML(s.emp.name.replace(/\\s*\\([^)]+\\)/, ''))}
@@ -871,10 +887,17 @@ function viewTrips() {
     state.filter_trip_month = "ALL";
   }
 
-  // 필터 적용
+  // 담당자 목록 (트립에 있는 담당자만)
+  const tripEmployees = ["ALL", ...new Set(state.trips.map(t => t.employee).filter(Boolean))];
+  if (!state.filter_trip_employee || !tripEmployees.includes(state.filter_trip_employee)) {
+    state.filter_trip_employee = "ALL";
+  }
+
+  // 필터 적용 (월 + 담당자)
   const filtered = state.trips.filter(t => {
-    if (state.filter_trip_month === "ALL") return true;
-    return (t.start_date || "").startsWith(state.filter_trip_month);
+    if (state.filter_trip_month !== "ALL" && !(t.start_date || "").startsWith(state.filter_trip_month)) return false;
+    if (state.filter_trip_employee !== "ALL" && t.employee !== state.filter_trip_employee) return false;
+    return true;
   });
 
   return `
@@ -894,7 +917,15 @@ function viewTrips() {
     </div>
 
     <div class="card mt-3">
-      <div class="chip-label">월 필터 (출장 시작월 기준)</div>
+      <div class="chip-label">담당자 필터</div>
+      <div class="chips">
+        ${tripEmployees.map(emp => {
+          const cnt = emp === "ALL" ? state.trips.length : state.trips.filter(t => t.employee === emp).length;
+          const label = emp === "ALL" ? "전체" : emp.replace(/\s*\([^)]+\)/, ""); // 괄호 제거해서 짧게
+          return `<button class="chip ${state.filter_trip_employee === emp ? "active" : ""}" onclick='setTripEmpFilter(${JSON.stringify(emp)})'>${escHTML(label)} (${cnt})</button>`;
+        }).join("")}
+      </div>
+      <div class="chip-label mt-2">월 필터 (출장 시작월 기준)</div>
       <div class="chips">
         ${monthTabs.map(m => {
           const cnt = m === "ALL" ? state.trips.length : state.trips.filter(t => (t.start_date || "").startsWith(m)).length;
@@ -1156,40 +1187,55 @@ function viewReports() {
                 <td class="mono">${escHTML(e.department || "—")}</td>
                 <td class="right">${att.length}</td>
                 <td class="right ${late > 3 ? "text-absent" : ""}">${late}</td>
-                <td class="right ${absent > 0 ? "text-late" : ""}">${absent}</td>
-                <td class="right">${e.remaining_leave}일</td>
+                            <td class="right ${absent > 1 ? "text-absent" : ""}">${absent}</td>
+                <td class="right"><b>${(e.remaining_leave ?? 0).toFixed(1)}</b></td>
               </tr>
             `;
           }).join("")}
         </tbody>
       </table></div>
     </div>
+  </div>
   `;
 }
 
 function doughnut(counts, total, colors) {
-  const entries = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-  if (total === 0) return empty("데이터 없음");
-  const r = 45, cx = 60, cy = 60;
-  const c = 2 * Math.PI * r;
-  let offset = 0;
-  const paths = entries.map(([k, v]) => {
+  const entries = Object.entries(counts).filter(([, v]) => v > 0);
+  if (!entries.length || total === 0) {
+    return `<div style="text-align:center; padding:32px; color:#94a3b8;">데이터 없음</div>`;
+  }
+  const C = 2 * Math.PI * 60;
+  let acc = 0;
+  const arcs = entries.map(([k, v]) => {
     const frac = v / total;
-    const dash = frac * c;
-    const color = colors[k] || "#94a3b8";
-    const el = `<circle r="${r}" cx="${cx}" cy="${cy}" fill="transparent" stroke="${color}" stroke-width="18" stroke-dasharray="${dash} ${c}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" />`;
-    offset += dash;
-    return el;
+    const dash = frac * C;
+    const off = -acc * C;
+    acc += frac;
+    return `<circle cx="80" cy="80" r="60" fill="none" stroke="${colors[k] || "#94a3b8"}" stroke-width="24" stroke-dasharray="${dash} ${C - dash}" stroke-dashoffset="${off}" transform="rotate(-90 80 80)"/>`;
   }).join("");
-  const legend = entries.map(([k, v]) => {
-    const pct = ((v / total) * 100).toFixed(1);
-    const color = colors[k] || "#94a3b8";
-    return `<div class="legend-item"><div><span class="legend-dot" style="background:${color}"></span>${k}</div><b>${v.toLocaleString()} (${pct}%)</b></div>`;
-  }).join("");
-  return `<div class="doughnut-wrap"><svg class="doughnut" viewBox="0 0 120 120">${paths}</svg><div class="doughnut-legend">${legend}</div></div>`;
+  const legend = entries.map(([k, v]) => `
+    <div style="display:flex; align-items:center; gap:6px; font-size:12px; margin:2px 0;">
+      <div style="width:12px; height:12px; background:${colors[k] || "#94a3b8"}; border-radius:3px;"></div>
+      <span>${k}: <b>${v}</b> (${((v/total)*100).toFixed(0)}%)</span>
+    </div>
+  `).join("");
+  return `
+    <div style="display:flex; align-items:center; gap:16px; padding:12px;">
+      <svg width="160" height="160" viewBox="0 0 160 160">${arcs}
+        <text x="80" y="76" text-anchor="middle" font-size="12" fill="#64748b">총</text>
+        <text x="80" y="94" text-anchor="middle" font-size="20" font-weight="bold" fill="#0f172a">${total}</text>
+      </svg>
+      <div style="flex:1;">${legend}</div>
+    </div>
+  `;
 }
 
 (async function() {
-  try { await load(); render(); }
-  catch (e) { console.error("Boot failed:", e); }
+  try {
+    await load();
+    state.loaded = true;
+    render();
+  } catch (e) {
+    console.error("Boot failed:", e);
+  }
 })();
