@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v6";  // v6: Yoo SangKyu 를 SCM Head 로 지정 (is_scm=true)
+const STORAGE_KEY = "vn-office-v7";  // v7: 퇴사자 Naomi, Stella 추가 삭제
 const PAGE_SIZE = 50;
 
 // ==========================================================================
