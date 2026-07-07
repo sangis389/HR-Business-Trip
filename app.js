@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v17";  // v17: Recap 호텔 방문 리스트 + 성과 KPI
+const STORAGE_KEY = "vn-office-v18";  // v18: Lukas 추가 · Thu/Slena 출장 대상 제외
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -652,8 +652,8 @@ function viewOverview() {
     })()}
 
     ${(() => {
-      // 담당자별 출장 요약 (SCM 인원 기준)
-      const scmEmps = state.employees.filter(e => e.is_scm);
+      // 담당자별 출장 요약 (SCM 출장 담당자 기준 · Thu/Slena 제외)
+      const scmEmps = state.employees.filter(e => e.is_scm && e.is_scm_traveler !== false);
       const summary = scmEmps.map(e => {
         const empTrips = state.trips.filter(t => t.employee === e.name);
         if (empTrips.length === 0) return null;
@@ -914,7 +914,7 @@ function handleTripFile(e) { if (e.target.files.length) importTripPlan(e.target.
 // ==========================================================================
 function viewTrips() {
   const cols = ["DRAFT","REQUESTED","APPROVED","IN_PROGRESS","COMPLETED"];
-  const scmCount = state.employees.filter(e => e.is_scm).length;
+  const scmCount = state.employees.filter(e => e.is_scm && e.is_scm_traveler !== false).length;
 
   // 트립 월 목록 (출장 시작월 기준)
   const tripMonths = [...new Set(state.trips.map(t => (t.start_date || "").slice(0, 7)).filter(Boolean))].sort().reverse();

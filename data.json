@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v17",
+    "version": "v18",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-07T15:00:00Z"
+    "updated": "2026-07-07T15:30:00Z"
   },
   "employees": [
     {
@@ -20,7 +20,8 @@
       "is_scm": true,
       "id": 1,
       "annual_leave": 12,
-      "remaining_leave": 4.0
+      "remaining_leave": 4.0,
+      "is_scm_traveler": true
     },
     {
       "person_id": "00000006",
@@ -64,7 +65,8 @@
       "is_scm": true,
       "id": 5,
       "annual_leave": 13,
-      "remaining_leave": 4.5
+      "remaining_leave": 4.5,
+      "is_scm_traveler": true
     },
     {
       "person_id": "00000018",
@@ -229,7 +231,8 @@
       "is_scm": true,
       "id": 20,
       "annual_leave": 12,
-      "remaining_leave": 6.5
+      "remaining_leave": 6.5,
+      "is_scm_traveler": true
     },
     {
       "person_id": "10000026",
@@ -273,7 +276,8 @@
       "is_scm": true,
       "id": 24,
       "annual_leave": 12,
-      "remaining_leave": 7.0
+      "remaining_leave": 7.0,
+      "is_scm_traveler": true
     },
     {
       "person_id": "10000053",
@@ -306,7 +310,8 @@
       "is_scm": true,
       "id": 27,
       "annual_leave": 12,
-      "remaining_leave": 9.0
+      "remaining_leave": 9.0,
+      "is_scm_traveler": false
     },
     {
       "person_id": "10000058",
@@ -372,7 +377,8 @@
       "is_scm": true,
       "id": 33,
       "annual_leave": 12,
-      "remaining_leave": 5.5
+      "remaining_leave": 5.5,
+      "is_scm_traveler": false
     },
     {
       "person_id": "10000071",
@@ -383,7 +389,8 @@
       "is_scm": true,
       "id": 34,
       "annual_leave": 12,
-      "remaining_leave": 0.5
+      "remaining_leave": 0.5,
+      "is_scm_traveler": true
     },
     {
       "person_id": "10000074",
@@ -394,7 +401,8 @@
       "is_scm": true,
       "id": 35,
       "annual_leave": 12,
-      "remaining_leave": 9.5
+      "remaining_leave": 9.5,
+      "is_scm_traveler": true
     },
     {
       "person_id": "10000079",
@@ -449,7 +457,8 @@
       "is_scm": true,
       "id": 40,
       "annual_leave": 12,
-      "remaining_leave": 0.0
+      "remaining_leave": 0.0,
+      "is_scm_traveler": true
     },
     {
       "person_id": "10000097",
@@ -482,7 +491,8 @@
       "is_scm": true,
       "annual_leave": 12,
       "remaining_leave": 10.5,
-      "id": 43
+      "id": 43,
+      "is_scm_traveler": true
     },
     {
       "person_id": "10000090",
@@ -505,6 +515,19 @@
       "annual_leave": 12,
       "remaining_leave": 6.5,
       "id": 45
+    },
+    {
+      "person_id": "10000099",
+      "name": "Do Xuan Huy Hoang (Lukas)",
+      "department": "Office/SCM",
+      "position": "Sales",
+      "join_date": "2025-01-01",
+      "is_scm": true,
+      "is_scm_traveler": true,
+      "annual_leave": 12.0,
+      "used_leave": 0.0,
+      "remaining_leave": 12.0,
+      "note": "출장 담당 · 근태 미포함"
     }
   ],
   "attendance": [
@@ -54880,7 +54903,7 @@
     {
       "id": 10,
       "title": "BT · 2026-05-13 ~ 2026-05-15 (3일)",
-      "employee": "Yoo SangKyu",
+      "employee": "Do Xuan Huy Hoang (Lukas)",
       "destination": "Da Lat, VN",
       "start_date": "2026-05-12",
       "end_date": "2026-05-14",
@@ -57058,7 +57081,7 @@
     },
     {
       "trip_id": "trip-e0a5c1e9",
-      "employee": "Yoo SangKyu",
+      "employee": "Do Xuan Huy Hoang (Lukas)",
       "destination": "Ho Chi Minh, VN",
       "start_date": "2026-01-19",
       "end_date": "2026-01-21",
@@ -57467,7 +57490,7 @@
     },
     {
       "trip_id": "trip-0f16d97a",
-      "employee": "Yoo SangKyu",
+      "employee": "Do Xuan Huy Hoang (Lukas)",
       "destination": "Da Lat, VN",
       "start_date": "2026-03-25",
       "end_date": "2026-03-27",
@@ -58049,6 +58072,25 @@
       "notes": "",
       "outcome": "방문 호텔 16곳 · Done 1 · In discussing 0 · Requested 5 · Rejected 0 · Pending 10 · 신규계약 시도 2",
       "roi": null
+    },
+    {
+      "id": 29,
+      "title": "BT · 2026-05-13 ~ 2026-05-15 (3일)",
+      "employee": "Yoo SangKyu",
+      "destination": "TBD (Timesheet BT)",
+      "start_date": "2026-05-13",
+      "end_date": "2026-05-15",
+      "purpose": "SCM Business Trip",
+      "status": "COMPLETED",
+      "cost_planned": 0,
+      "cost_actual": 0,
+      "currency": "VND",
+      "partners": [],
+      "itinerary": [],
+      "outcome": "",
+      "roi": null,
+      "notes": "Timesheet BT 자동 반영 · 3영업일",
+      "hotels": []
     }
   ]
 }
