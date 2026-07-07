@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v14";  // v14: SCM 출장 월별 필터 UI 추가
+const STORAGE_KEY = "vn-office-v15";  // v15: 대시보드 담당자별 출장 요약 카드
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -599,31 +599,73 @@ function viewOverview() {
       </div>
     </div>
 
-    ${completed.length > 0 ? `
-      <div class="card mt-4">
-        <h3>📈 완료된 SCM 출장 성과</h3>
-        <div class="table-wrap"><table>
-          <thead><tr>
-            <th>Trip</th><th>담당자</th><th>목적지</th>
-            <th class="right">예산</th><th class="right">실지출</th>
-            <th class="right">ROI</th><th>결과 요약</th>
-          </tr></thead>
-          <tbody>
-            ${completed.map(t => `
-              <tr>
-                <td>#${t.id} ${escHTML(t.title)}</td>
-                <td>${escHTML(t.employee)}</td>
-                <td>${escHTML(t.destination)}</td>
-                <td class="right">${curSym(t.currency)}${fmt(t.cost_planned)}</td>
-                <td class="right">${curSym(t.currency)}${fmt(t.cost_actual)}</td>
-                <td class="right"><b>${t.roi ? t.roi.toFixed(1) + "x" : "—"}</b></td>
-                <td>${escHTML(t.outcome || "—")}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table></div>
-      </div>
-    ` : ""}
+    ${(() => {
+      // 담당자별 출장 요약 (SCM 인원 기준)
+      const scmEmps = state.employees.filter(e => e.is_scm);
+      const summary = scmEmps.map(e => {
+        const empTrips = state.trips.filter(t => t.employee === e.name);
+        if (empTrips.length === 0) return null;
+        const totalDays = empTrips.reduce((s, t) => {
+          const d1 = new Date(t.start_date), d2 = new Date(t.end_date);
+          return s + (isNaN(d1) || isNaN(d2) ? 0 : Math.max(1, Math.round((d2 - d1) / 86400000) + 1));
+        }, 0);
+        const sortedByEnd = [...empTrips].sort((a,b) => (b.end_date||"").localeCompare(a.end_date||""));
+        const mostRecent = sortedByEnd[0];
+        const completedCount = empTrips.filter(t => t.status === "COMPLETED").length;
+        const missingOutcome = empTrips.filter(t => t.status === "COMPLETED" && !t.outcome).length;
+        const activeCount = empTrips.filter(t => ["APPROVED","IN_PROGRESS"].includes(t.status)).length;
+        return { emp: e, empTrips, totalDays, mostRecent, completedCount, missingOutcome, activeCount };
+      }).filter(Boolean).sort((a,b) => b.empTrips.length - a.empTrips.length);
+
+      if (summary.length === 0) return "";
+
+      return `
+        <div class="card mt-4">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="margin:0;">📈 담당자별 SCM 출장 요약</h3>
+            <span style="font-size:11px; color:#64748b;">${summary.length}명 · 총 ${state.trips.length}건</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px;">
+            ${summary.map(s => {
+              const isHead = s.emp.position === "SCM Head";
+              return `
+                <div style="border:1px solid #e2e8f0; border-radius:10px; padding:12px; background:#fff; cursor:pointer;" onclick="state.filter_trip_month='ALL'; go('trips');">
+                  <div style="display:flex; align-items:center; gap:6px; margin-bottom:8px;">
+                    <span style="font-size:13px; font-weight:600; color:${isHead ? '#4f46e5' : '#0f172a'};">
+                      ${isHead ? '👑 ' : ''}${escHTML(s.emp.name.replace(/\\s*\\([^)]+\\)/, ''))}
+                    </span>
+                  </div>
+                  ${(() => {
+                    const nick = (s.emp.name.match(/\\(([^)]+)\\)/) || [])[1];
+                    return nick ? `<div style="font-size:10px; color:#94a3b8; margin-top:-4px; margin-bottom:6px;">${escHTML(nick)}</div>` : "";
+                  })()}
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                    <span style="color:#64748b;">총 출장</span>
+                    <span><b>${s.empTrips.length}건</b> · ${s.totalDays}일</span>
+                  </div>
+                  ${s.activeCount > 0 ? `
+                    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                      <span style="color:#64748b;">진행 중</span>
+                      <span class="badge b-primary">${s.activeCount}건</span>
+                    </div>` : ""}
+                  <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                    <span style="color:#64748b;">최근 출장</span>
+                    <span style="color:#0f172a;">${s.mostRecent.end_date}</span>
+                  </div>
+                  ${s.missingOutcome > 0 ? `
+                    <div style="margin-top:8px; padding:4px 8px; background:#fef3c7; border-radius:6px; font-size:11px; color:#92400e; text-align:center;">
+                      ⚠️ 결과 미기입 ${s.missingOutcome}건
+                    </div>` : (s.completedCount > 0 ? `
+                    <div style="margin-top:8px; padding:4px 8px; background:#dcfce7; border-radius:6px; font-size:11px; color:#166534; text-align:center;">
+                      ✅ 결과보고 완료
+                    </div>` : "")}
+                </div>
+              `;
+            }).join("")}
+          </div>
+        </div>
+      `;
+    })()}
   `;
 }
 
@@ -1082,73 +1124,4 @@ function viewReports() {
         <tbody>
           ${Object.entries(deptStats).sort((a,b) => (b[1].late/b[1].total) - (a[1].late/a[1].total)).map(([d, s]) => {
             const rate = ((s.late / s.total) * 100).toFixed(1);
-            const isSCM = d.toUpperCase().includes("SCM");
-            return `
-              <tr>
-                <td><b>${escHTML(d)}</b>${isSCM ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
-                <td class="right">${s.total.toLocaleString()}</td>
-                <td class="right ${s.late > 20 ? "text-late" : ""}">${s.late}</td>
-                <td class="right ${s.absent > 5 ? "text-absent" : ""}">${s.absent}</td>
-                <td class="right"><b>${rate}%</b></td>
-              </tr>
-            `;
-          }).join("")}
-        </tbody>
-      </table></div>
-    </div>
-
-    <div class="card mt-4">
-      <h3>인원별 근태 요약</h3>
-      <div class="table-wrap"><table>
-        <thead><tr>
-          <th>이름</th><th>부서</th><th class="right">근태</th>
-          <th class="right">지각</th><th class="right">결근</th><th class="right">잔여 연차</th>
-        </tr></thead>
-        <tbody>
-          ${state.employees.map(e => {
-            const att = state.attendance.filter(a => a.person_id === e.person_id);
-            const late = att.filter(a => a.status === "LATE").length;
-            const absent = att.filter(a => a.status === "ABSENT").length;
-            return `
-              <tr>
-                <td><b>${escHTML(e.name)}</b>${e.is_scm ? (e.position === "SCM Head" ? `<span class="badge b-scm" style="margin-left:6px; background:#4f46e5; color:#fff;">👑 SCM Head</span>` : `<span class="badge b-scm" style="margin-left:6px;">SCM</span>`) : ""}</td>
-                <td class="mono">${escHTML(e.department || "—")}</td>
-                <td class="right">${att.length}</td>
-                <td class="right ${late > 3 ? "text-absent" : ""}">${late}</td>
-                <td class="right ${absent > 0 ? "text-late" : ""}">${absent}</td>
-                <td class="right">${e.remaining_leave}일</td>
-              </tr>
-            `;
-          }).join("")}
-        </tbody>
-      </table></div>
-    </div>
-  `;
-}
-
-function doughnut(counts, total, colors) {
-  const entries = Object.entries(counts).sort((a,b) => b[1] - a[1]);
-  if (total === 0) return empty("데이터 없음");
-  const r = 45, cx = 60, cy = 60;
-  const c = 2 * Math.PI * r;
-  let offset = 0;
-  const paths = entries.map(([k, v]) => {
-    const frac = v / total;
-    const dash = frac * c;
-    const color = colors[k] || "#94a3b8";
-    const el = `<circle r="${r}" cx="${cx}" cy="${cy}" fill="transparent" stroke="${color}" stroke-width="18" stroke-dasharray="${dash} ${c}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" />`;
-    offset += dash;
-    return el;
-  }).join("");
-  const legend = entries.map(([k, v]) => {
-    const pct = ((v / total) * 100).toFixed(1);
-    const color = colors[k] || "#94a3b8";
-    return `<div class="legend-item"><div><span class="legend-dot" style="background:${color}"></span>${k}</div><b>${v.toLocaleString()} (${pct}%)</b></div>`;
-  }).join("");
-  return `<div class="doughnut-wrap"><svg class="doughnut" viewBox="0 0 120 120">${paths}</svg><div class="doughnut-legend">${legend}</div></div>`;
-}
-
-(async function() {
-  try { await load(); render(); }
-  catch (e) { console.error("Boot failed:", e); }
-})();
+            const isSCM = d.toUpperCase().includes(
