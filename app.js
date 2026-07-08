@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v33";  // v33: 통합 캘린더에서 중복 SCM 담당자 chip 제거 (Office/SCM 과 동일)
+const STORAGE_KEY = "vn-office-v34";  // v34: 월/유형 필터 드롭다운 형식으로 변경 (근태·연차, SCM 출장, 통합 캘린더)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1114,13 +1114,19 @@ function renderAttendanceDaily() {
       <div class="chips">
         ${depts.map(d => `<button class="chip ${state.filter_dept === d ? "active" : ""}" onclick="state.filter_dept='${d}'; state.page_att=1; render();">${d === "ALL" ? "전체" : escHTML(d)}</button>`).join("")}
       </div>
-      <div class="chip-label mt-2">월</div>
-      <div class="chips">
-        ${months.map(m => `<button class="chip ${state.filter_month === m ? "active" : ""}" onclick="state.filter_month='${m}'; state.page_att=1; render();">${m === "ALL" ? "전체" : m}</button>`).join("")}
-      </div>
-      <div class="chip-label mt-2">상태</div>
-      <div class="chips">
-        ${statuses.map(s => `<button class="chip ${state.filter_status === s ? "active" : ""}" onclick="state.filter_status='${s}'; state.page_att=1; render();">${s === "ALL" ? "전체" : s}</button>`).join("")}
+      <div style="display:flex; gap:12px; margin-top:10px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:180px;">
+          <div class="chip-label">월</div>
+          <select class="select-filter" onchange="state.filter_month=this.value; state.page_att=1; render();">
+            ${months.map(m => `<option value="${m}" ${state.filter_month === m ? "selected" : ""}>${m === "ALL" ? "전체" : m}</option>`).join("")}
+          </select>
+        </div>
+        <div style="flex:1; min-width:180px;">
+          <div class="chip-label">상태</div>
+          <select class="select-filter" onchange="state.filter_status=this.value; state.page_att=1; render();">
+            ${statuses.map(s => `<option value="${s}" ${state.filter_status === s ? "selected" : ""}>${s === "ALL" ? "전체" : s}</option>`).join("")}
+          </select>
+        </div>
       </div>
     </div>
 
@@ -1225,13 +1231,19 @@ function renderLeavesTab() {
       <div class="chips">
         ${depts.map(d => `<button class="chip ${state.filter_dept === d ? "active" : ""}" onclick="state.filter_dept='${escHTML(d)}'; render();">${d === "ALL" ? "전체" : escHTML(d)}</button>`).join("")}
       </div>
-      <div class="chip-label mt-2">월</div>
-      <div class="chips">
-        ${months.map(m => `<button class="chip ${state.filter_month === m ? "active" : ""}" onclick="state.filter_month='${m}'; render();">${m === "ALL" ? "전체" : m}</button>`).join("")}
-      </div>
-      <div class="chip-label mt-2">유형</div>
-      <div class="chips">
-        ${types.map(t => `<button class="chip ${activeType === t ? "active" : ""}" onclick="state.filter_leave_type='${t}'; render();">${t === "ALL" ? "전체" : t}</button>`).join("")}
+      <div style="display:flex; gap:12px; margin-top:10px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:180px;">
+          <div class="chip-label">월</div>
+          <select class="select-filter" onchange="state.filter_month=this.value; render();">
+            ${months.map(m => `<option value="${m}" ${state.filter_month === m ? "selected" : ""}>${m === "ALL" ? "전체" : m}</option>`).join("")}
+          </select>
+        </div>
+        <div style="flex:1; min-width:180px;">
+          <div class="chip-label">유형</div>
+          <select class="select-filter" onchange="state.filter_leave_type=this.value; render();">
+            ${types.map(t => `<option value="${t}" ${activeType === t ? "selected" : ""}>${t === "ALL" ? "전체" : `${t} · ${leaveInfo(t).label}`}</option>`).join("")}
+          </select>
+        </div>
       </div>
     </div>
 
@@ -1791,18 +1803,22 @@ function viewTrips() {
     </div>
 
     <div class="card mt-3">
-      <div class="chip-label">담당자 필터</div>
-      <div class="chips">
-        ${tripEmployees.map(emp => {
-          const label = emp === "ALL" ? "전체" : nickOnly(emp);
-          return `<button class="chip ${state.filter_trip_employee === emp ? "active" : ""}" onclick='setTripEmpFilter(${JSON.stringify(emp)})'>${escHTML(label)}</button>`;
-        }).join("")}
-      </div>
-      <div class="chip-label mt-2">월 필터 (출장 시작월 기준)</div>
-      <div class="chips">
-        ${monthTabs.map(m => {
-          return `<button class="chip ${state.filter_trip_month === m ? "active" : ""}" onclick="state.filter_trip_month='${m}'; render();">${m === "ALL" ? "전체" : m}</button>`;
-        }).join("")}
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:200px;">
+          <div class="chip-label">담당자 필터</div>
+          <select class="select-filter" onchange="setTripEmpFilter(this.value)">
+            ${tripEmployees.map(emp => {
+              const label = emp === "ALL" ? "전체" : nickOnly(emp);
+              return `<option value="${escHTML(emp)}" ${state.filter_trip_employee === emp ? "selected" : ""}>${escHTML(label)}</option>`;
+            }).join("")}
+          </select>
+        </div>
+        <div style="flex:1; min-width:200px;">
+          <div class="chip-label">월 필터 (출장 시작월 기준)</div>
+          <select class="select-filter" onchange="state.filter_trip_month=this.value; render();">
+            ${monthTabs.map(m => `<option value="${m}" ${state.filter_trip_month === m ? "selected" : ""}>${m === "ALL" ? "전체" : m}</option>`).join("")}
+          </select>
+        </div>
       </div>
     </div>
 
@@ -2038,19 +2054,19 @@ function viewCalendar() {
     </div>
 
     <div class="card mt-3">
-      <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-        <div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:180px;">
           <div class="chip-label">월</div>
-          <div class="chips">
-            ${allMonths.map(m => `<button class="chip ${state.cal_month === m ? "active" : ""}" onclick="state.cal_month='${m}'; render();">${m}</button>`).join("")}
-          </div>
+          <select class="select-filter" onchange="state.cal_month=this.value; render();">
+            ${allMonths.map(m => `<option value="${m}" ${state.cal_month === m ? "selected" : ""}>${m}</option>`).join("")}
+          </select>
         </div>
-        <div style="flex:1; min-width:300px;">
+        <div style="flex:1; min-width:220px;">
           <div class="chip-label">범위 · 부서</div>
-          <div class="chips">
-            <button class="chip ${state.cal_scope === "ALL" ? "active" : ""}" onclick="state.cal_scope='ALL'; render();">전체 인원</button>
-            ${allDepts.map(d => `<button class="chip ${state.cal_scope === d ? "active" : ""}" onclick="state.cal_scope='${escHTML(d)}'; render();">${escHTML(d)}</button>`).join("")}
-          </div>
+          <select class="select-filter" onchange="state.cal_scope=this.value; render();">
+            <option value="ALL" ${state.cal_scope === "ALL" ? "selected" : ""}>전체 인원</option>
+            ${allDepts.map(d => `<option value="${escHTML(d)}" ${state.cal_scope === d ? "selected" : ""}>${escHTML(d)}</option>`).join("")}
+          </select>
         </div>
       </div>
       <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; font-size:11px;">
