@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v40";  // v40: DK Hanoi 계획서 추가 (7/14-16, 방문 예정 17곳)
+const STORAGE_KEY = "vn-office-v41";  // v41: 트립 제목 통일 형식 "{City} Biz Trip (DD-DD Mon)"
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -564,6 +564,26 @@ function escHTML(s) {
 }
 function val(id) { return document.getElementById(id).value.trim(); }
 function fmt(n) { return (n || 0).toLocaleString(); }
+// 트립 제목 통일 형식: "Hanoi Biz Trip (14-16 Jul)"
+function formatTripTitle(destination, startDate, endDate) {
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  let city = (destination || "").split(",")[0].split("/")[0].trim();
+  if (!city) city = "Biz";
+  if (city.startsWith("Abroad")) city = "Abroad";
+  if (city.startsWith("TBD")) city = "TBD";
+  try {
+    const sd = new Date(startDate + "T00:00:00");
+    const ed = new Date(endDate + "T00:00:00");
+    const sd_str = String(sd.getDate()).padStart(2,"0");
+    const ed_str = String(ed.getDate()).padStart(2,"0");
+    if (sd.getMonth() === ed.getMonth()) {
+      return `${city} Biz Trip (${sd_str}-${ed_str} ${MONTHS[sd.getMonth()]})`;
+    }
+    return `${city} Biz Trip (${sd_str} ${MONTHS[sd.getMonth()]}-${ed_str} ${MONTHS[ed.getMonth()]})`;
+  } catch(e) {
+    return `${city} Biz Trip`;
+  }
+}
 
 // ============================================================================
 // Leave Type 정의 (연차 신청 유형)
@@ -1756,7 +1776,7 @@ async function importTripRecap(file, wb, hotels, expenseSheet) {
       const destShortName = (dest || "Biz Trip").replace(/,.*$/,"").trim();
       state.trips.push({
         id: nextId,
-        title: `${destShortName} · ${start} (${end && start ? Math.round((new Date(end)-new Date(start))/86400000)+1 : 1}일)`,
+        title: formatTripTitle(dest, start, end),
         employee: emp,
         destination: dest,
         start_date: start, end_date: end,

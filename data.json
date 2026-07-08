@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v40",
+    "version": "v41",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-08T09:00:00Z"
+    "updated": "2026-07-08T09:30:00Z"
   },
   "employees": [
     {
@@ -54841,7 +54841,7 @@
     },
     {
       "id": 2,
-      "title": "BT · 2026-01-13 ~ 2026-01-15 (3일)",
+      "title": "Hanoi Biz Trip (13-15 Jan)",
       "employee": "Trinh Ngoc Duy (Andy)",
       "destination": "Hanoi, VN",
       "start_date": "2026-01-13",
@@ -55072,7 +55072,7 @@
     },
     {
       "id": 3,
-      "title": "BT · 2026-05-26 ~ 2026-05-28 (3일)",
+      "title": "Hanoi Biz Trip (26-28 May)",
       "employee": "Trinh Ngoc Duy (Andy)",
       "destination": "Hanoi, VN",
       "start_date": "2026-05-26",
@@ -55303,7 +55303,7 @@
     },
     {
       "id": 4,
-      "title": "BT · 2026-02-05 ~ 2026-02-06 (2일)",
+      "title": "Abroad Biz Trip (05-06 Feb)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
       "start_date": "2026-02-05",
@@ -55322,7 +55322,7 @@
     },
     {
       "id": 5,
-      "title": "BT · 2026-02-24 ~ 2026-02-27 (4일)",
+      "title": "Abroad Biz Trip (24-27 Feb)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
       "start_date": "2026-02-24",
@@ -55341,7 +55341,7 @@
     },
     {
       "id": 6,
-      "title": "BT · 2026-03-04 ~ 2026-03-06 (3일)",
+      "title": "Abroad Biz Trip (04-06 Mar)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
       "start_date": "2026-03-04",
@@ -55360,7 +55360,7 @@
     },
     {
       "id": 7,
-      "title": "BT · 2026-03-10 ~ 2026-03-11 (2일)",
+      "title": "Abroad Biz Trip (10-11 Mar)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
       "start_date": "2026-03-10",
@@ -55379,7 +55379,7 @@
     },
     {
       "id": 8,
-      "title": "BT · 2026-04-07 ~ 2026-04-10 (4일)",
+      "title": "Abroad Biz Trip (07-10 Apr)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
       "start_date": "2026-04-07",
@@ -55398,7 +55398,7 @@
     },
     {
       "id": 9,
-      "title": "BT · 2026-04-13 ~ 2026-04-15 (3일)",
+      "title": "Abroad Biz Trip (13-15 Apr)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
       "start_date": "2026-04-13",
@@ -55417,7 +55417,7 @@
     },
     {
       "id": 10,
-      "title": "BT · 2026-05-13 ~ 2026-05-15 (3일)",
+      "title": "Da Lat Biz Trip (12-14 May)",
       "employee": "Do Xuan Huy Hoang (Lukas)",
       "destination": "Da Lat, VN",
       "start_date": "2026-05-12",
@@ -55802,7 +55802,7 @@
     },
     {
       "id": 11,
-      "title": "BT · 2026-05-18 ~ 2026-05-18 (1일)",
+      "title": "Abroad Biz Trip (18-18 May)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
       "start_date": "2026-05-18",
@@ -55821,7 +55821,7 @@
     },
     {
       "id": 12,
-      "title": "BT · 2026-05-25 ~ 2026-05-29 (5일)",
+      "title": "Abroad Biz Trip (25-29 May)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
       "start_date": "2026-05-25",
@@ -55840,7 +55840,7 @@
     },
     {
       "id": 13,
-      "title": "BT · 2026-06-22 ~ 2026-06-26 (5일)",
+      "title": "Abroad Biz Trip (22-26 Jun)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
       "start_date": "2026-06-22",
@@ -55859,7 +55859,7 @@
     },
     {
       "id": 14,
-      "title": "BT · 2026-02-05 ~ 2026-02-08 (4일)",
+      "title": "Abroad Biz Trip (05-08 Feb)",
       "employee": "Truong Diem Quynh (Slena)",
       "destination": "Abroad (해외)",
       "start_date": "2026-02-05",
@@ -55878,7 +55878,7 @@
     },
     {
       "id": 15,
-      "title": "BT · 2026-06-22 ~ 2026-06-26 (5일)",
+      "title": "Abroad Biz Trip (22-26 Jun)",
       "employee": "Truong Diem Quynh (Slena)",
       "destination": "Abroad (해외)",
       "start_date": "2026-06-22",
@@ -55897,7 +55897,7 @@
     },
     {
       "id": 16,
-      "title": "BT · 2026-03-10 ~ 2026-03-12 (3일)",
+      "title": "Quy Nhon Biz Trip (10-12 Mar)",
       "employee": "Pham Thi Phuong Anh (Anna)",
       "destination": "Quy Nhon, VN",
       "start_date": "2026-03-10",
@@ -56161,7 +56161,7 @@
     },
     {
       "id": 17,
-      "title": "BT · 2026-06-02 ~ 2026-06-04 (3일)",
+      "title": "Quy Nhon Biz Trip (02-03 Jun)",
       "employee": "Pham Thi Phuong Anh (Anna)",
       "destination": "Quy Nhon, VN",
       "start_date": "2026-06-02",
@@ -56359,7 +56359,7 @@
     },
     {
       "id": 18,
-      "title": "BT · 2026-03-17 ~ 2026-03-19 (3일)",
+      "title": "Da Nang Biz Trip (17-19 Mar)",
       "employee": "Trinh Ngoc Minh (Mike)",
       "destination": "Da Nang, VN",
       "start_date": "2026-03-17",
@@ -56612,7 +56612,7 @@
     },
     {
       "id": 19,
-      "title": "BT · 2026-05-26 ~ 2026-05-28 (3일)",
+      "title": "Phan Thiet Biz Trip (26-28 May)",
       "employee": "Trinh Ngoc Minh (Mike)",
       "destination": "Phan Thiet, VN",
       "start_date": "2026-05-26",
@@ -56854,7 +56854,7 @@
     },
     {
       "id": 20,
-      "title": "BT · 2026-03-24 ~ 2026-03-26 (3일)",
+      "title": "Hoi An Biz Trip (24-26 Mar)",
       "employee": "Ha Hoang Yen Nhi (Nhi)",
       "destination": "Hoi An, VN",
       "start_date": "2026-03-24",
@@ -57107,7 +57107,7 @@
     },
     {
       "id": 21,
-      "title": "BT · 2026-06-16 ~ 2026-06-18 (3일)",
+      "title": "Hoi An Biz Trip (16-18 Jun)",
       "employee": "Ha Hoang Yen Nhi (Nhi)",
       "destination": "Hoi An, VN",
       "start_date": "2026-06-16",
@@ -57360,7 +57360,7 @@
     },
     {
       "id": 22,
-      "title": "BT · 2026-05-19 ~ 2026-05-21 (3일)",
+      "title": "Phu Quoc Biz Trip (19-21 May)",
       "employee": "Le Thi Kim Anh (Aerum)",
       "destination": "Phu Quoc, VN",
       "start_date": "2026-05-19",
@@ -57569,7 +57569,7 @@
     },
     {
       "id": 23,
-      "title": "BT · 2026-05-19 ~ 2026-05-21 (3일)",
+      "title": "TBD Biz Trip  (19-21 May)",
       "employee": "Tran Ngoc Duy Khang (DK)",
       "destination": "TBD (Timesheet BT)",
       "start_date": "2026-05-19",
@@ -57588,7 +57588,7 @@
     },
     {
       "id": 24,
-      "title": "BT · 2026-06-02 ~ 2026-06-03 (2일)",
+      "title": "Quy Nhon Biz Trip (02-03 Jun)",
       "employee": "Doan Thi Kieu Trinh (Hanny)",
       "destination": "Quy Nhon, VN",
       "start_date": "2026-06-02",
@@ -57918,7 +57918,7 @@
       "expense_vnd": 747840,
       "source_file": "HCM Biz Trip (19 - 21 Jan 26) Lukas.xlsx",
       "id": 25,
-      "title": "Ho Chi Minh · 2026-01-19 (3일)",
+      "title": "Ho Chi Minh Biz Trip (19-21 Jan)",
       "cost_planned": 747840,
       "cost_actual": 747840,
       "currency": "VND",
@@ -58183,7 +58183,7 @@
       "expense_vnd": null,
       "source_file": "Quy Nhon Biz Trip 10-12 Mar 2026 - Hanny - Final.xlsx",
       "id": 26,
-      "title": "Quy Nhon · 2026-03-10 (3일)",
+      "title": "Quy Nhon Biz Trip (10-12 Mar)",
       "cost_planned": 0,
       "cost_actual": 0,
       "currency": "VND",
@@ -58569,7 +58569,7 @@
       "expense_vnd": 1471000,
       "source_file": "Dalat Biz Trip (25 - 27 Mar 26) Lukas.xlsx",
       "id": 27,
-      "title": "Da Lat · 2026-03-25 (3일)",
+      "title": "Da Lat Biz Trip (25-27 Mar)",
       "cost_planned": 1471000,
       "cost_actual": 1471000,
       "currency": "VND",
@@ -58768,7 +58768,7 @@
       "expense_vnd": null,
       "source_file": "report Hanoi 7-9 Apr 2026_Anna !.xlsx",
       "id": 28,
-      "title": "Hanoi · 2026-04-07 (3일)",
+      "title": "Hanoi Biz Trip (07-09 Apr)",
       "cost_planned": 0,
       "cost_actual": 0,
       "currency": "VND",
@@ -58780,7 +58780,7 @@
     },
     {
       "id": 29,
-      "title": "BT · 2026-05-13 ~ 2026-05-15 (3일)",
+      "title": "Abroad Biz Trip (13-15 May)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
       "start_date": "2026-05-13",
@@ -58799,7 +58799,7 @@
     },
     {
       "id": 30,
-      "title": "Hanoi · 2026-04-07 (3일)",
+      "title": "Hanoi Biz Trip (07-09 Apr)",
       "employee": "Trinh Ngoc Duy (Andy)",
       "destination": "Hanoi, VN",
       "start_date": "2026-04-07",
@@ -59041,7 +59041,7 @@
     },
     {
       "id": 31,
-      "title": "Hanoi Biz Trip · 2026-07-14 ~ 07-16 (3일) · DK",
+      "title": "Hanoi Biz Trip (14-16 Jul)",
       "employee": "Tran Ngoc Duy Khang (DK)",
       "destination": "Hanoi, VN",
       "start_date": "2026-07-14",
