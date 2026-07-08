@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v31";  // v31: 인원 · 휴가 이력에 부여/사용/잔여 컬럼 추가
+const STORAGE_KEY = "vn-office-v32";  // v32: leaves 필드 load/save 누락 버그 수정
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -47,7 +47,7 @@ function recomputeAllAttendance() {
 
 let state = {
   view: "overview",
-  employees: [],
+  employees: [], leaves: [],
   attendance: [],
   trips: [],
   filter_dept: "ALL",
@@ -72,6 +72,7 @@ function save() {
     employees: state.employees,
     attendance: state.attendance,
     trips: state.trips,
+    leaves: state.leaves,
   };
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(persist)); }
   catch (e) { console.warn("localStorage save failed:", e); }
@@ -87,6 +88,7 @@ async function load() {
         state.employees = p.employees;
         state.attendance = p.attendance || [];
         state.trips = p.trips || [];
+        state.leaves = p.leaves || [];
         recomputeAllAttendance();  // 08:15 규칙으로 재계산
         state.loaded = true;
         return;
@@ -102,6 +104,7 @@ async function load() {
     state.employees = data.employees || [];
     state.attendance = data.attendance || [];
     state.trips = data.trips || [];
+    state.leaves = data.leaves || [];
     recomputeAllAttendance();  // 08:15 규칙으로 재계산
     state.loaded = true;
     save();
@@ -126,7 +129,7 @@ function resetAll() {
 }
 
 function exportBackup() {
-  const data = { employees: state.employees, attendance: state.attendance, trips: state.trips };
+  const data = { employees: state.employees, attendance: state.attendance, trips: state.trips, leaves: state.leaves };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
