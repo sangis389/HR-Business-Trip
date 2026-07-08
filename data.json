@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v37",
+    "version": "v40",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-07T20:20:00Z"
+    "updated": "2026-07-08T09:00:00Z"
   },
   "employees": [
     {
@@ -59038,6 +59038,215 @@
       "notes": "",
       "roi": null,
       "outcome": "방문 호텔 20곳 · Done 14 · In discussing 0 · Requested 0 · Rejected 0 · Pending 6 · 신규계약 시도 0"
+    },
+    {
+      "id": 31,
+      "title": "Hanoi Biz Trip · 2026-07-14 ~ 07-16 (3일) · DK",
+      "employee": "Tran Ngoc Duy Khang (DK)",
+      "destination": "Hanoi, VN",
+      "start_date": "2026-07-14",
+      "end_date": "2026-07-16",
+      "purpose": "Build up relationship and new connect (17 calls)",
+      "status": "APPROVED",
+      "cost_planned": 3510000,
+      "cost_actual": 0,
+      "currency": "VND",
+      "partners": [],
+      "itinerary": [],
+      "hotels": [
+        {
+          "hotel": "TRU BY HILTON Hanoi Station",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Meliá Vinpearl Thanh Hoa",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "A25 Group",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "FLC Group",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "22Land Residence Hotel",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Hotel de Lagom Hanoi",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Dusit Le Palais Tu Hoa Hanoi",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Hanoi Daewoo Hotel",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Fortuna Hotel Hanoi",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Grand Plaza Hanoi Hotel",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Grand K Hotel Suites Hanoi",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Fraser Suites Hanoi",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Reyna Hotel",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Pan Pacific Hanoi",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Melia Hanoi",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Sofitel Legend Metropole Hanoi",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "La Siesta",
+          "contract": "",
+          "contact": "",
+          "purpose": "Plan · 방문 예정",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        }
+      ],
+      "expense_vnd": 3510000,
+      "source_file": "HANOI-Biz Trip (14 - 16 Jul) - DK.xlsx",
+      "outcome": "방문 예정 호텔 17곳 · 결과보고 대기",
+      "roi": null,
+      "notes": "숙박: Little Charm Boutique 1,300k × 2박 + 식비 130k × 7끼"
     }
   ],
   "leaves": [
