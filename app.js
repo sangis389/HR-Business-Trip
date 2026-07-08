@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v30";  // v30: 전 부서 휴가 이력 데이터 생성 (ABSENT → AL 자동 변환 205건)
+const STORAGE_KEY = "vn-office-v31";  // v31: 인원 · 휴가 이력에 부여/사용/잔여 컬럼 추가
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1017,10 +1017,16 @@ function viewEmployees() {
       <div class="table-wrap"><table>
         <thead><tr>
           <th>Person ID</th><th>이름</th><th>부서</th><th>직책</th><th>성별</th>
-          <th class="right">잔여 연차</th>
+          <th class="right" style="background:#fef3c7;">부여</th>
+          <th class="right" style="background:#fef3c7;">사용</th>
+          <th class="right" style="background:#dcfce7;">잔여</th>
         </tr></thead>
         <tbody>
-          ${filtered.map(e => `
+          ${filtered.map(e => {
+            const annual = e.annual_leave || 0;
+            const remaining = e.remaining_leave || 0;
+            const used = Math.max(0, annual - remaining);
+            return `
             <tr>
               <td class="mono">${escHTML(e.person_id || "—")}</td>
               <td>
@@ -1030,9 +1036,11 @@ function viewEmployees() {
               <td>${escHTML(e.department || "—")}</td>
               <td>${escHTML(e.position || "—")}</td>
               <td>${escHTML(e.gender || "—")}</td>
-              <td class="right">${e.remaining_leave} / ${e.annual_leave}일</td>
-            </tr>
-          `).join("")}
+              <td class="right" style="background:#fef3c7;"><b>${annual.toFixed(1)}</b></td>
+              <td class="right" style="background:#fef3c7;">${used.toFixed(1)}</td>
+              <td class="right" style="background:#dcfce7;"><b>${remaining.toFixed(1)}</b></td>
+            </tr>`;
+          }).join("")}
         </tbody>
       </table></div>
     </div>
@@ -1223,6 +1231,64 @@ function renderLeavesTab() {
         ${types.map(t => `<button class="chip ${activeType === t ? "active" : ""}" onclick="state.filter_leave_type='${t}'; render();">${t === "ALL" ? "전체" : t}</button>`).join("")}
       </div>
     </div>
+
+    ${(() => {
+      // 담당자별 연차 사용 요약 (부서 필터 반영)
+      const empList = state.filter_dept === "ALL" ? state.employees : state.employees.filter(e => e.department === state.filter_dept);
+      const perEmp = empList.map(e => {
+        const myLeaves = allLeaves.filter(l => l.status === "APPROVED" && l.name === e.name);
+        const annual = e.annual_leave || 0;
+        const usedAL = myLeaves.filter(l => l.type === "AL").reduce((s,l) => s + (l.days || 1), 0);
+        const usedAL2 = myLeaves.filter(l => l.type === "AL/2").reduce((s,l) => s + (l.days || 0.5), 0);
+        const usedAnnual = usedAL + usedAL2;
+        const usedUP = myLeaves.filter(l => l.type === "UP" || l.type === "UP/2").reduce((s,l) => s + (l.days || leaveInfo(l.type).days), 0);
+        const usedSL = myLeaves.filter(l => l.type === "SL").reduce((s,l) => s + (l.days || 1), 0);
+        const usedBT = myLeaves.filter(l => l.type === "BT").reduce((s,l) => s + (l.days || 1), 0);
+        const usedOther = myLeaves.filter(l => ["H","CL","MR","FL","MN"].includes(l.type)).reduce((s,l) => s + (l.days || 1), 0);
+        // 실제 이력 기반 잔여
+        const remaining = (state.leaves && state.leaves.length > 0) ? annual - usedAnnual : (e.remaining_leave ?? 0);
+        return { e, annual, usedAnnual, usedAL, usedAL2, usedUP, usedSL, usedBT, usedOther, remaining };
+      }).filter(r => r.usedAnnual > 0 || r.usedBT > 0 || r.usedUP > 0 || r.usedSL > 0 || r.usedOther > 0);
+      perEmp.sort((a,b) => b.usedAnnual - a.usedAnnual);
+      if (perEmp.length === 0) return "";
+
+      return `
+        <div class="card mt-3" style="padding:0;">
+          <div style="padding:10px 14px; border-bottom:1px solid #e2e8f0; background:#f8fafc; font-size:12px; font-weight:600;">
+            📋 담당자별 사용 요약 <span style="color:#64748b; font-weight:400;">(부서: ${state.filter_dept === "ALL" ? "전체" : state.filter_dept} · ${perEmp.length}명)</span>
+          </div>
+          <div class="table-wrap"><table>
+            <thead><tr>
+              <th>담당자</th><th>부서</th>
+              <th class="right" style="background:#eff6ff;">AL</th>
+              <th class="right" style="background:#eff6ff;">AL/2</th>
+              <th class="right">UP</th>
+              <th class="right">SL</th>
+              <th class="right">BT</th>
+              <th class="right">기타 PL</th>
+              <th class="right" style="background:#fef3c7;">부여</th>
+              <th class="right" style="background:#fef3c7;">사용<br/><small>(연차)</small></th>
+              <th class="right" style="background:#dcfce7;">잔여</th>
+            </tr></thead>
+            <tbody>
+              ${perEmp.map(r => `
+                <tr>
+                  <td><b>${escHTML(nickOnly(r.e.name))}</b>${r.e.is_scm ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
+                  <td class="mono">${escHTML(r.e.department || "—")}</td>
+                  <td class="right" style="background:#eff6ff;">${r.usedAL || "—"}</td>
+                  <td class="right" style="background:#eff6ff;">${r.usedAL2 || "—"}</td>
+                  <td class="right">${r.usedUP || "—"}</td>
+                  <td class="right">${r.usedSL || "—"}</td>
+                  <td class="right">${r.usedBT || "—"}</td>
+                  <td class="right">${r.usedOther || "—"}</td>
+                  <td class="right" style="background:#fef3c7;"><b>${r.annual.toFixed(1)}</b></td>
+                  <td class="right" style="background:#fef3c7;">${r.usedAnnual.toFixed(1)}</td>
+                  <td class="right" style="background:#dcfce7;"><b>${r.remaining.toFixed(1)}</b></td>
+                </tr>`).join("")}
+            </tbody>
+          </table></div>
+        </div>`;
+    })()}
 
     <div class="card mt-3" style="padding:0;">
       <div class="table-wrap"><table>
