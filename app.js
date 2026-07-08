@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v38";  // v38: SCM 인원 이름 옆 SCM 뱃지 제거 (SCM Head 뱃지만 유지)
+const STORAGE_KEY = "vn-office-v39";  // v39: 일별 근태 3-뷰 토글 (일별/인원×월/부서×월) + drill-down
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -56,6 +56,7 @@ let state = {
   page_att: 1,
   late_tab: null,  // 대시보드 부서별 지각 Top 5 선택 탭
   att_tab: "daily",  // 근태 페이지 서브탭: daily / leaves / summary
+  att_view: "person_month",  // 일별 근태 뷰 모드: detail / person_month / dept_month
   filter_leave_type: "ALL",  // 휴가 이력 타입 필터
   cal_month: null,           // 캘린더 뷰 월
   cal_scope: "SCM",          // 캘린더 범위: SCM | ALL
@@ -1080,8 +1081,257 @@ function viewAttendance() {
   `;
 }
 
-// ===== 일별 근태 (기존 뷰) =====
+// ===== 일별 근태 (3-뷰 토글: 일별 / 인원×월 / 부서×월) =====
 function renderAttendanceDaily() {
+  if (!state.att_view) state.att_view = "person_month"; // 기본 요약 뷰
+  const viewModes = [
+    { id: "detail",       label: "📅 일별 상세" },
+    { id: "person_month", label: "👤 인원 × 월 요약" },
+    { id: "dept_month",   label: "🏢 부서 × 월 요약" },
+  ];
+  const viewToggle = `
+    <div class="card mt-3" style="padding:6px; background:#f8fafc; display:flex; gap:4px;">
+      ${viewModes.map(v => `
+        <button style="flex:1; padding:8px; border-radius:6px; border:none; cursor:pointer; background:${state.att_view === v.id ? '#4f46e5' : 'transparent'}; color:${state.att_view === v.id ? '#fff' : '#64748b'}; font-weight:${state.att_view === v.id ? '600' : '400'}; font-size:12px;" onclick="state.att_view='${v.id}'; state.page_att=1; render();">${v.label}</button>
+      `).join("")}
+    </div>`;
+
+  if (state.att_view === "person_month") return viewToggle + renderPersonMonthSummary();
+  if (state.att_view === "dept_month") return viewToggle + renderDeptMonthSummary();
+  return viewToggle + renderAttendanceDetailInner();
+}
+
+// ===== 인원 × 월 요약 =====
+function renderPersonMonthSummary() {
+  const depts = ["ALL", ...new Set(state.employees.map(e => e.department).filter(Boolean))].sort();
+  const monthsAvail = ["ALL", ...new Set(state.attendance.map(a => (a.date || "").slice(0, 7)).filter(Boolean))].sort().reverse();
+  if (!depts.includes(state.filter_dept)) state.filter_dept = "ALL";
+  if (!monthsAvail.includes(state.filter_month)) state.filter_month = "ALL";
+
+  const allLeaves = [...(state.leaves || []), ...autoGenerateBTLeaves()];
+  const leaveMap = {}; // "name|date" → leave
+  allLeaves.filter(l => l.status === "APPROVED").forEach(l => { leaveMap[`${l.name}|${l.date}`] = l; });
+
+  const empByPid = {};
+  state.employees.forEach(e => { empByPid[e.person_id] = e; });
+
+  // Build person × month rows
+  const rows = [];
+  const empList = state.filter_dept === "ALL" ? state.employees : state.employees.filter(e => e.department === state.filter_dept);
+  const monthList = state.filter_month === "ALL" ? monthsAvail.filter(m => m !== "ALL") : [state.filter_month];
+
+  empList.forEach(emp => {
+    monthList.forEach(m => {
+      const myAtt = state.attendance.filter(a => a.person_id === emp.person_id && (a.date || "").startsWith(m));
+      if (myAtt.length === 0) return; // no data this month
+
+      let normal = 0, lateCnt = 0, lateMin = 0, absent = 0;
+      let al = 0, al2 = 0, sl = 0, bt = 0, other = 0, up = 0;
+      myAtt.forEach(a => {
+        const leave = leaveMap[`${a.name}|${a.date}`];
+        if (leave) {
+          const info = leaveInfo(leave.type);
+          if (leave.type === "AL") al += 1;
+          else if (leave.type === "AL/2") al2 += 0.5;
+          else if (leave.type === "SL") sl += 1;
+          else if (leave.type === "BT") bt += 1;
+          else if (leave.type === "UP" || leave.type === "UP/2") up += (leave.days || info.days);
+          else other += (leave.days || 1);
+          return;
+        }
+        if (a.status === "LATE") { lateCnt++; lateMin += (a.late_minutes || 0); normal++; }
+        else if (a.status === "ABSENT") absent++;
+        else normal++;
+      });
+      const workDays = myAtt.length;
+      const lateRate = workDays > 0 ? (lateCnt / workDays * 100) : 0;
+      rows.push({ emp, m, workDays, normal, lateCnt, lateMin, absent, al, al2, sl, bt, up, other, lateRate });
+    });
+  });
+
+  // Sort by dept, then name
+  rows.sort((a,b) => (a.emp.department || "").localeCompare(b.emp.department || "") || (a.emp.name || "").localeCompare(b.emp.name || "") || a.m.localeCompare(b.m));
+
+  return `
+    <div class="card mt-3">
+      <div class="chip-label">부서</div>
+      <div class="chips">
+        ${depts.map(d => `<button class="chip ${state.filter_dept === d ? "active" : ""}" onclick="state.filter_dept='${escHTML(d)}'; state.page_att=1; render();">${d === "ALL" ? "전체" : escHTML(d)}</button>`).join("")}
+      </div>
+      <div style="margin-top:10px; max-width:280px;">
+        <div class="chip-label">월</div>
+        <select class="select-filter" onchange="state.filter_month=this.value; render();">
+          ${monthsAvail.map(m => `<option value="${m}" ${state.filter_month === m ? "selected" : ""}>${m === "ALL" ? "전체" : m}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+
+    <div class="card mt-3" style="background:#eff6ff; border-color:#bfdbfe; padding:10px 14px; font-size:12px; color:#1e3a8a;">
+      ℹ️ 담당자 × 월 단위로 근태·휴가 통합 요약. 지각률 15% 이상 → 빨강 · 결근 있음 → 빨강. 행 클릭 시 일별 상세로 이동. <b>${rows.length}행</b>
+    </div>
+
+    <div class="card mt-3" style="padding:0;">
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>담당자</th><th>부서</th><th>월</th>
+          <th class="right">근무일</th>
+          <th class="right">정상</th>
+          <th class="right">지각(회/분)</th>
+          <th class="right">결근</th>
+          <th class="right" style="background:#eff6ff;">AL</th>
+          <th class="right" style="background:#eff6ff;">AL/2</th>
+          <th class="right">SL</th>
+          <th class="right">BT</th>
+          <th class="right">UP</th>
+          <th class="right" style="background:#fef3c7;">지각률</th>
+        </tr></thead>
+        <tbody>
+          ${rows.length === 0 ? `<tr><td colspan="13" style="text-align:center; padding:24px; color:#94a3b8;">데이터 없음</td></tr>` :
+            rows.map(r => {
+              const highLate = r.lateRate >= 15;
+              const hasAbsent = r.absent > 0;
+              return `
+                <tr style="cursor:pointer;" onclick="drillToDetail('${r.emp.person_id}', '${r.m}')" title="일별 상세로 이동">
+                  <td><b>${escHTML(nickOnly(r.emp.name))}</b></td>
+                  <td class="mono" style="font-size:11px;">${escHTML(r.emp.department || "—")}</td>
+                  <td>${r.m}</td>
+                  <td class="right">${r.workDays}</td>
+                  <td class="right" style="color:#16a34a;">${r.normal}</td>
+                  <td class="right ${r.lateCnt > 0 ? 'text-late' : ''}">${r.lateCnt > 0 ? `${r.lateCnt}회 / ${r.lateMin}분` : '—'}</td>
+                  <td class="right ${hasAbsent ? 'text-absent' : ''}">${r.absent || '—'}</td>
+                  <td class="right" style="background:#eff6ff;">${r.al || '—'}</td>
+                  <td class="right" style="background:#eff6ff;">${r.al2 || '—'}</td>
+                  <td class="right">${r.sl || '—'}</td>
+                  <td class="right">${r.bt || '—'}</td>
+                  <td class="right">${r.up || '—'}</td>
+                  <td class="right" style="background:#fef3c7; ${highLate ? 'color:#dc2626; font-weight:700;' : ''}">${r.lateRate.toFixed(1)}%</td>
+                </tr>`;
+            }).join("")}
+        </tbody>
+      </table></div>
+    </div>
+  `;
+}
+
+// ===== 부서 × 월 요약 =====
+function renderDeptMonthSummary() {
+  const monthsAvail = ["ALL", ...new Set(state.attendance.map(a => (a.date || "").slice(0, 7)).filter(Boolean))].sort().reverse();
+  if (!monthsAvail.includes(state.filter_month)) state.filter_month = "ALL";
+
+  const allLeaves = [...(state.leaves || []), ...autoGenerateBTLeaves()];
+  const leaveMap = {};
+  allLeaves.filter(l => l.status === "APPROVED").forEach(l => { leaveMap[`${l.name}|${l.date}`] = l; });
+
+  const monthList = state.filter_month === "ALL" ? monthsAvail.filter(m => m !== "ALL") : [state.filter_month];
+  const depts = [...new Set(state.employees.map(e => e.department).filter(Boolean))].sort();
+
+  const rows = [];
+  depts.forEach(d => {
+    monthList.forEach(m => {
+      const empIds = state.employees.filter(e => e.department === d).map(e => e.person_id);
+      const myAtt = state.attendance.filter(a => empIds.includes(a.person_id) && (a.date || "").startsWith(m));
+      if (myAtt.length === 0) return;
+      let normal = 0, lateCnt = 0, lateMin = 0, absent = 0;
+      let al = 0, sl = 0, bt = 0;
+      myAtt.forEach(a => {
+        const leave = leaveMap[`${a.name}|${a.date}`];
+        if (leave) {
+          if (leave.type === "AL" || leave.type === "AL/2") al += (leave.days || 1);
+          else if (leave.type === "SL") sl += 1;
+          else if (leave.type === "BT") bt += 1;
+          return;
+        }
+        if (a.status === "LATE") { lateCnt++; lateMin += (a.late_minutes || 0); normal++; }
+        else if (a.status === "ABSENT") absent++;
+        else normal++;
+      });
+      const workDays = myAtt.length;
+      const lateRate = workDays > 0 ? (lateCnt / workDays * 100) : 0;
+      const empCount = empIds.length;
+      rows.push({ d, m, empCount, workDays, normal, lateCnt, lateMin, absent, al, sl, bt, lateRate });
+    });
+  });
+
+  rows.sort((a,b) => a.d.localeCompare(b.d) || a.m.localeCompare(b.m));
+
+  return `
+    <div class="card mt-3" style="max-width:280px;">
+      <div class="chip-label">월</div>
+      <select class="select-filter" onchange="state.filter_month=this.value; render();">
+        ${monthsAvail.map(m => `<option value="${m}" ${state.filter_month === m ? "selected" : ""}>${m === "ALL" ? "전체" : m}</option>`).join("")}
+      </select>
+    </div>
+
+    <div class="card mt-3" style="background:#eff6ff; border-color:#bfdbfe; padding:10px 14px; font-size:12px; color:#1e3a8a;">
+      ℹ️ 부서 × 월 단위 집계. 행 클릭 시 해당 부서·월의 인원별 상세로 이동. <b>${rows.length}행</b>
+    </div>
+
+    <div class="card mt-3" style="padding:0;">
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>부서</th><th>월</th>
+          <th class="right">인원</th>
+          <th class="right">근태건수</th>
+          <th class="right">정상</th>
+          <th class="right">지각(회/평균분)</th>
+          <th class="right">결근</th>
+          <th class="right" style="background:#eff6ff;">AL</th>
+          <th class="right">SL</th>
+          <th class="right">BT</th>
+          <th class="right" style="background:#fef3c7;">지각률</th>
+        </tr></thead>
+        <tbody>
+          ${rows.length === 0 ? `<tr><td colspan="11" style="text-align:center; padding:24px; color:#94a3b8;">데이터 없음</td></tr>` :
+            rows.map(r => {
+              const highLate = r.lateRate >= 10;
+              const avgLate = r.lateCnt > 0 ? (r.lateMin / r.lateCnt).toFixed(0) : 0;
+              return `
+                <tr style="cursor:pointer;" onclick="drillToDeptDetail('${escHTML(r.d)}', '${r.m}')" title="인원별 요약으로 이동">
+                  <td><b>${escHTML(r.d)}</b></td>
+                  <td>${r.m}</td>
+                  <td class="right">${r.empCount}</td>
+                  <td class="right">${r.workDays}</td>
+                  <td class="right" style="color:#16a34a;">${r.normal}</td>
+                  <td class="right ${r.lateCnt > 0 ? 'text-late' : ''}">${r.lateCnt > 0 ? `${r.lateCnt}회 / ${avgLate}분` : '—'}</td>
+                  <td class="right ${r.absent > 0 ? 'text-absent' : ''}">${r.absent || '—'}</td>
+                  <td class="right" style="background:#eff6ff;">${r.al || '—'}</td>
+                  <td class="right">${r.sl || '—'}</td>
+                  <td class="right">${r.bt || '—'}</td>
+                  <td class="right" style="background:#fef3c7; ${highLate ? 'color:#dc2626; font-weight:700;' : ''}">${r.lateRate.toFixed(1)}%</td>
+                </tr>`;
+            }).join("")}
+        </tbody>
+      </table></div>
+    </div>
+  `;
+}
+
+// Drill-down helpers
+function drillToDetail(pid, month) {
+  const emp = state.employees.find(e => e.person_id === pid);
+  if (!emp) return;
+  state.filter_dept = emp.department || "ALL";
+  state.filter_month = month;
+  state.filter_status = "ALL";
+  state.att_view = "detail";
+  state.page_att = 1;
+  // 담당자 highlight 위한 임시 filter (이름 검색용은 없으므로 부서+월로 좁힘)
+  render();
+  const content = document.querySelector(".content");
+  if (content) content.scrollTop = 0;
+}
+function drillToDeptDetail(dept, month) {
+  state.filter_dept = dept;
+  state.filter_month = month;
+  state.att_view = "person_month";
+  state.page_att = 1;
+  render();
+  const content = document.querySelector(".content");
+  if (content) content.scrollTop = 0;
+}
+
+// ===== 일별 상세 (기존 로직 - 내부 함수로 분리) =====
+function renderAttendanceDetailInner() {
   const depts = ["ALL", ...new Set(state.employees.map(e => e.department))];
   const months = ["ALL", ...new Set(state.attendance.map(a => (a.date || "").slice(0, 7)).filter(Boolean))].sort().reverse();
   const statuses = ["ALL","NORMAL","LATE","ABSENT"];
@@ -1113,7 +1363,7 @@ function renderAttendanceDaily() {
     <div class="card mt-3">
       <div class="chip-label">부서</div>
       <div class="chips">
-        ${depts.map(d => `<button class="chip ${state.filter_dept === d ? "active" : ""}" onclick="state.filter_dept='${d}'; state.page_att=1; render();">${d === "ALL" ? "전체" : escHTML(d)}</button>`).join("")}
+        ${depts.map(d => `<button class="chip ${state.filter_dept === d ? "active" : ""}" onclick="state.filter_dept='${escHTML(d)}'; state.page_att=1; render();">${d === "ALL" ? "전체" : escHTML(d)}</button>`).join("")}
       </div>
       <div style="display:flex; gap:12px; margin-top:10px; flex-wrap:wrap;">
         <div style="flex:1; min-width:180px;">
@@ -2014,12 +2264,10 @@ function viewCalendar() {
     return d.getDay() === 0 || d.getDay() === 6;
   };
 
-  // 셀 스타일 결정
   const cellStyle = (emp, date) => {
     const leave = leaveMap[`${emp.person_id}|${date}`];
     const att = attMap[`${emp.person_id}|${date}`];
     const weekend = isWeekend(date);
-
     if (leave) {
       const info = leaveInfo(leave.type);
       return { bg: info.color, fg: "#fff", label: leave.type.replace("/",""), title: `${info.label}${leave.note ? " · " + leave.note : ""}` };
@@ -2031,7 +2279,6 @@ function viewCalendar() {
     return { bg: "#dcfce7", fg: "#16a34a", label: "○", title: "정상 출근" };
   };
 
-  // 담당자별 월 요약
   const empSummary = (emp) => {
     let normalD = 0, lateD = 0, absentD = 0;
     const byType = {};
@@ -2183,9 +2430,8 @@ function viewReports() {
         <thead><tr><th>부서</th><th class="right">총 근태</th><th class="right">지각</th><th class="right">결근</th><th class="right">지각률</th></tr></thead>
         <tbody>${Object.entries(deptStats).sort((a,b) => (b[1].late/b[1].total) - (a[1].late/a[1].total)).map(([d, s]) => {
           const rate = ((s.late / s.total) * 100).toFixed(1);
-          const isSCM = d.toUpperCase().includes("SCM");
           return `<tr>
-              <td><b>${escHTML(d)}</b>${isSCM ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
+              <td><b>${escHTML(d)}</b></td>
               <td class="right">${s.total.toLocaleString()}</td>
               <td class="right ${s.late > 20 ? "text-late" : ""}">${s.late}</td>
               <td class="right ${s.absent > 5 ? "text-absent" : ""}">${s.absent}</td>
