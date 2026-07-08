@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v35";  // v35: 직책 업데이트 (Leader 5명 · Director 4명)
+const STORAGE_KEY = "vn-office-v36";  // v36: TBD 트립 목적지 → Abroad (해외) 변경
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -623,11 +623,12 @@ function nickOnly(name) {
   const m = (name || "").match(/\(([^)]+)\)/);
   return m ? m[1].trim() : (name || "").trim();
 }
-// 지역명을 짧게 (예: "Ho Chi Minh, VN" → "Ho Chi Minh", "TBD (Timesheet BT)" → "TBD")
+// 지역명을 짧게 (예: "Ho Chi Minh, VN" → "Ho Chi Minh", "Abroad (해외)" → "Abroad")
 function destShort(dest) {
   if (!dest) return "—";
   let d = dest.replace(", VN", "").trim();
-  if (d.startsWith("TBD")) return "TBD";
+  if (d.startsWith("TBD")) return "Abroad";
+  if (d.startsWith("Abroad")) return "Abroad";
   return d;
 }
 function curSym(c) { return c === "VND" ? "₫" : c === "USD" ? "$" : c === "KRW" ? "₩" : ""; }
@@ -1589,8 +1590,8 @@ function renderTripAnalytics() {
   // 지역별 트립 수
   const byDest = {};
   trips.forEach(t => {
-    let d = (t.destination || "TBD").replace(", VN", "").trim();
-    if (d.startsWith("TBD")) d = "TBD (Timesheet)";
+    let d = (t.destination || "Abroad").replace(", VN", "").trim();
+    if (d.startsWith("TBD") || d.startsWith("Abroad")) d = "Abroad (해외)";
     byDest[d] = (byDest[d] || 0) + 1;
   });
   const destRows = Object.entries(byDest).sort((a,b) => b[1] - a[1]);
@@ -1659,11 +1660,11 @@ function renderTripAnalytics() {
         <div style="padding:8px 12px;">
           ${destRows.map(([d, cnt]) => {
             const pct = Math.round(cnt / maxDest * 100);
-            const isTBD = d.startsWith("TBD");
-            const color = isTBD ? "#94a3b8" : "#3b82f6";
+            const isAbroad = d.startsWith("Abroad") || d.startsWith("TBD");
+            const color = isAbroad ? "#7c3aed" : "#3b82f6";
             return `
               <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; font-size:12px; cursor:pointer;" title="${escHTML(d)} · ${cnt}건">
-                <div style="width:100px; font-weight:${isTBD ? '400' : '500'}; color:${isTBD ? '#94a3b8' : '#0f172a'};">${escHTML(d)}</div>
+                <div style="width:100px; font-weight:500; color:${isAbroad ? '#7c3aed' : '#0f172a'};">${escHTML(d)}</div>
                 <div style="flex:1; height:16px; background:#f1f5f9; border-radius:4px; overflow:hidden;">
                   <div style="width:${pct}%; height:100%; background:${color}; border-radius:4px;"></div>
                 </div>
