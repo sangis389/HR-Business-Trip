@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v36",
+    "version": "v37",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-07T20:10:00Z"
+    "updated": "2026-07-07T20:20:00Z"
   },
   "employees": [
     {
@@ -57571,7 +57571,7 @@
       "id": 23,
       "title": "BT · 2026-05-19 ~ 2026-05-21 (3일)",
       "employee": "Tran Ngoc Duy Khang (DK)",
-      "destination": "Abroad (해외)",
+      "destination": "TBD (Timesheet BT)",
       "start_date": "2026-05-19",
       "end_date": "2026-05-21",
       "purpose": "SOURCING",

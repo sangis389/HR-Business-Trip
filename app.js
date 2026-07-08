@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v36";  // v36: TBD 트립 목적지 → Abroad (해외) 변경
+const STORAGE_KEY = "vn-office-v37";  // v37: DK 5/19-21 트립 Abroad → TBD 복원
 const PAGE_SIZE = 50;
 
 // ==========================================================================
