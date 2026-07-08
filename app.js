@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v37";  // v37: DK 5/19-21 트립 Abroad → TBD 복원
+const STORAGE_KEY = "vn-office-v38";  // v38: SCM 인원 이름 옆 SCM 뱃지 제거 (SCM Head 뱃지만 유지)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1035,7 +1035,7 @@ function viewEmployees() {
               <td class="mono">${escHTML(e.person_id || "—")}</td>
               <td>
                 <b>${escHTML(e.name)}</b>
-                ${e.is_scm ? (e.position === "SCM Head" ? `<span class="badge b-scm" style="margin-left:6px; background:#4f46e5; color:#fff;">👑 SCM Head</span>` : `<span class="badge b-scm" style="margin-left:6px;">SCM</span>`) : ""}
+                ${e.is_scm && e.position === "SCM Head" ? `<span class="badge b-scm" style="margin-left:6px; background:#4f46e5; color:#fff;">👑 SCM Head</span>` : ""}
               </td>
               <td>${escHTML(e.department || "—")}</td>
               <td>${escHTML(e.position || "—")}</td>
@@ -1157,7 +1157,6 @@ function renderAttendanceDaily() {
                 <td>${a.date}</td>
                 <td>
                   <b>${escHTML(a.name)}</b>
-                  ${a.department && a.department.toUpperCase().includes("SCM") ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}
                 </td>
                 <td class="mono">${escHTML(a.department || "—")}</td>
                 <td>${a.check_in || "—"}</td>
@@ -1289,7 +1288,7 @@ function renderLeavesTab() {
             <tbody>
               ${perEmp.map(r => `
                 <tr>
-                  <td><b>${escHTML(nickOnly(r.e.name))}</b>${r.e.is_scm ? `<span class="badge b-scm" style="margin-left:6px;">SCM</span>` : ""}</td>
+                  <td><b>${escHTML(nickOnly(r.e.name))}</b></td>
                   <td class="mono">${escHTML(r.e.department || "—")}</td>
                   <td class="right" style="background:#eff6ff;">${r.usedAL || "—"}</td>
                   <td class="right" style="background:#eff6ff;">${r.usedAL2 || "—"}</td>
