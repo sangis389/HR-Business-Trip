@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v32";  // v32: leaves 필드 load/save 누락 버그 수정
+const STORAGE_KEY = "vn-office-v33";  // v33: 통합 캘린더에서 중복 SCM 담당자 chip 제거 (Office/SCM 과 동일)
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -1949,7 +1949,7 @@ function viewCalendar() {
     const months = [...new Set(state.attendance.map(a => (a.date || "").slice(0,7)).filter(Boolean))].sort();
     state.cal_month = months[months.length - 1] || "2026-06";
   }
-  if (!state.cal_scope) state.cal_scope = "SCM"; // SCM | ALL | 부서명 (예: Office/SCM)
+  if (!state.cal_scope || state.cal_scope === "SCM") state.cal_scope = "ALL"; // ALL | 부서명 (예: Office/SCM)
 
   const [yStr, mStr] = state.cal_month.split("-");
   const year = parseInt(yStr), month = parseInt(mStr);
@@ -1964,9 +1964,7 @@ function viewCalendar() {
 
   // 담당자 리스트
   let emps;
-  if (state.cal_scope === "SCM") {
-    emps = state.employees.filter(e => e.is_scm);
-  } else if (state.cal_scope === "ALL") {
+  if (state.cal_scope === "ALL") {
     emps = state.employees.slice();
   } else {
     // 특정 부서
@@ -2051,7 +2049,6 @@ function viewCalendar() {
           <div class="chip-label">범위 · 부서</div>
           <div class="chips">
             <button class="chip ${state.cal_scope === "ALL" ? "active" : ""}" onclick="state.cal_scope='ALL'; render();">전체 인원</button>
-            <button class="chip ${state.cal_scope === "SCM" ? "active" : ""}" onclick="state.cal_scope='SCM'; render();">👑 SCM 담당자</button>
             ${allDepts.map(d => `<button class="chip ${state.cal_scope === d ? "active" : ""}" onclick="state.cal_scope='${escHTML(d)}'; render();">${escHTML(d)}</button>`).join("")}
           </div>
         </div>
