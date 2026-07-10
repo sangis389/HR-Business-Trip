@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v43";  // v43: Monti · MiA 7월 AL 반영 (6건)
+const STORAGE_KEY = "vn-office-v44";  // v44: Mike Da Nang 계획서 추가 (7/28-30, 방문 예정 21곳)
 const PAGE_SIZE = 50;
 
 // ==========================================================================

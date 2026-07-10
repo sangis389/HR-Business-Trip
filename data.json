@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v43",
+    "version": "v44",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-08T10:30:00Z"
+    "updated": "2026-07-08T11:00:00Z"
   },
   "employees": [
     {
@@ -59247,6 +59247,259 @@
       "outcome": "방문 예정 호텔 17곳 · 결과보고 대기",
       "roi": null,
       "notes": "숙박: Little Charm Boutique 1,300k × 2박 + 식비 130k × 7끼"
+    },
+    {
+      "id": 32,
+      "title": "Da Nang Biz Trip (28-30 Jul)",
+      "employee": "Trinh Ngoc Minh (Mike)",
+      "destination": "Da Nang, VN",
+      "start_date": "2026-07-28",
+      "end_date": "2026-07-30",
+      "purpose": "Negotiate to reactive / approach new PIC / build relationship",
+      "status": "APPROVED",
+      "cost_planned": 2862778,
+      "cost_actual": 0,
+      "currency": "VND",
+      "partners": [],
+      "itinerary": [],
+      "hotels": [
+        {
+          "hotel": "Centre Point Da Nang",
+          "contract": "Shared / Ellis",
+          "contact": "",
+          "purpose": "Warm up connection and negotiate promotion (Winter deal)",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "TMS Hotel Da Nang",
+          "contract": "Shared / SMD",
+          "contact": "",
+          "purpose": "Market overview, tactical rate suggestion and winter deal",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Grandvrio City Da Nang",
+          "contract": "Shared / HTL",
+          "contact": "",
+          "purpose": "Warm up connection, market overview, tactical rate suggestion",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "San Marino Boutique Da Nang",
+          "contract": "Shared / SMD",
+          "contact": "",
+          "purpose": "Warm up connection and negotiate promotion (Winter deal)",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Furama Resort Da Nang",
+          "contract": "Dual Contract / SMD",
+          "contact": "",
+          "purpose": "Meeting with PIC, share rate promotion request. Low season",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Haian Riverfront Hotel",
+          "contract": "Dynamic / SMD",
+          "contact": "",
+          "purpose": "Wake up process, dynamic rate promotion negotiation",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Altara Suite Hotel Da Nang",
+          "contract": "Suspended",
+          "contact": "",
+          "purpose": "Wake up process, negotiate to reopen",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Santa Luxury Hotel",
+          "contract": "Shared / Ellis",
+          "contact": "",
+          "purpose": "Warm up connection and negotiate promotion (Winter deal)",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Hold Amanda Hotel (New Hotel)",
+          "contract": "New Contract",
+          "contact": "",
+          "purpose": "Meeting for process new contract",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Terra Boutique Hotel",
+          "contract": "Shared / Ellis",
+          "contact": "",
+          "purpose": "Warm up for reconnection and negotiate for Exclusive deal",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Prague Hotel",
+          "contract": "Shared / HTL",
+          "contact": "",
+          "purpose": "Overview rate and sharing market insight. Negotiate",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Mikazuki Japanese",
+          "contract": "Shared / SMD",
+          "contact": "",
+          "purpose": "Warm up connection, negotiate winter deal, overview Autumn",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Da Nang Petro Hotel (New Hotel)",
+          "contract": "New Contract",
+          "contact": "",
+          "purpose": "Meeting for process new contract",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "A la Carte Danang Beach Hotel (Wake Up)",
+          "contract": "Dual Contract / SMD",
+          "contact": "",
+          "purpose": "Meeting new PIC for build up relationship and negotiate",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Wyndham Soleil Da Nang",
+          "contract": "Shared / Ellis",
+          "contact": "",
+          "purpose": "Meeting new PIC for build up relationship and negotiate",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Sunny Ocean Hotel",
+          "contract": "Shared / D-Edge",
+          "contact": "",
+          "purpose": "Overview production, market insight sharing and negotiate",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Radisson RED Hotel",
+          "contract": "Shared / Ellis",
+          "contact": "",
+          "purpose": "Wake up process, follow up with low seasonal promotion",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Grand Gold Hotel",
+          "contract": "Shared / HTL",
+          "contact": "",
+          "purpose": "Reconnection, follow up for open allotment",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Gold Plaza Hotel",
+          "contract": "Dynamic / HTL",
+          "contact": "",
+          "purpose": "Reconnection, follow up for open allotment and negotiate",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Phuc Long Luxury Hotel",
+          "contract": "Shared / SMD",
+          "contact": "",
+          "purpose": "Wake up process, negotiate to reopen",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        },
+        {
+          "hotel": "Alani Hotel & Spa Da Nang",
+          "contract": "Shared / HTL",
+          "contact": "",
+          "purpose": "Wake up process, negotiate to reopen",
+          "summary": "",
+          "followup": "",
+          "result_1w": "",
+          "result_1m": "",
+          "status": "PENDING"
+        }
+      ],
+      "expense_vnd": 2862778,
+      "source_file": "Da Nang Biz Trip 28.7 - 30.7 - Mike.xlsx",
+      "outcome": "방문 예정 호텔 21곳 · 결과보고 대기",
+      "roi": null,
+      "notes": "숙박: Avatar Da Nang Hotel 976,389 × 2박 + 식비 130k × 7끼"
     }
   ],
   "leaves": [
