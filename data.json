@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v41",
+    "version": "v42",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-08T09:30:00Z"
+    "updated": "2026-07-08T10:10:00Z"
   },
   "employees": [
     {
@@ -455,9 +455,9 @@
       "is_scm": true,
       "id": 34,
       "annual_leave": 12.0,
-      "remaining_leave": 0.5,
+      "remaining_leave": 3.0,
       "is_scm_traveler": true,
-      "used_leave": 11.5,
+      "used_leave": 9.0,
       "leave_baseline_date": "2026-06-30"
     },
     {
@@ -60846,39 +60846,6 @@
       "auto": true
     },
     {
-      "id": "al-conv-10000071-2026-03-24",
-      "person_id": "10000071",
-      "name": "Ha Hoang Yen Nhi (Nhi)",
-      "date": "2026-03-24",
-      "type": "AL",
-      "days": 1.0,
-      "status": "APPROVED",
-      "note": "ABSENT → AL 자동 변환",
-      "auto": true
-    },
-    {
-      "id": "al-conv-10000071-2026-03-25",
-      "person_id": "10000071",
-      "name": "Ha Hoang Yen Nhi (Nhi)",
-      "date": "2026-03-25",
-      "type": "AL",
-      "days": 1.0,
-      "status": "APPROVED",
-      "note": "ABSENT → AL 자동 변환",
-      "auto": true
-    },
-    {
-      "id": "al-conv-10000071-2026-03-26",
-      "person_id": "10000071",
-      "name": "Ha Hoang Yen Nhi (Nhi)",
-      "date": "2026-03-26",
-      "type": "AL",
-      "days": 1.0,
-      "status": "APPROVED",
-      "note": "ABSENT → AL 자동 변환",
-      "auto": true
-    },
-    {
       "id": "al-conv-10000071-2026-03-27",
       "person_id": "10000071",
       "name": "Ha Hoang Yen Nhi (Nhi)",
@@ -60942,17 +60909,6 @@
       "days": 1.0,
       "status": "APPROVED",
       "note": "ABSENT → AL 자동 변환",
-      "auto": true
-    },
-    {
-      "id": "al2-conv-10000071-2026-06-16",
-      "person_id": "10000071",
-      "name": "Ha Hoang Yen Nhi (Nhi)",
-      "date": "2026-06-16",
-      "type": "AL/2",
-      "days": 0.5,
-      "status": "APPROVED",
-      "note": "ABSENT → AL/2 자동 변환",
       "auto": true
     },
     {
@@ -61504,6 +61460,17 @@
       "status": "APPROVED",
       "note": "ABSENT → AL 자동 변환",
       "auto": true
+    },
+    {
+      "id": "al-10000071-2026-07-13",
+      "person_id": "10000071",
+      "name": "Ha Hoang Yen Nhi (Nhi)",
+      "date": "2026-07-13",
+      "type": "AL",
+      "days": 1.0,
+      "status": "APPROVED",
+      "note": "수기 입력",
+      "auto": false
     }
   ]
 }
