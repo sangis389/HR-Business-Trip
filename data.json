@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v45",
+    "version": "v46",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-08T12:00:00Z"
+    "updated": "2026-07-08T13:00:00Z"
   },
   "employees": [
     {
@@ -591,7 +591,8 @@
       "remaining_leave": 8.0,
       "id": 44,
       "used_leave": 4.0,
-      "leave_baseline_date": "2026-06-30"
+      "leave_baseline_date": "2026-06-30",
+      "is_scm_traveler": true
     },
     {
       "person_id": "10000094",
@@ -69325,11 +69326,11 @@
     },
     {
       "id": 13,
-      "title": "Abroad Biz Trip (22-26 Jun)",
+      "title": "Abroad Biz Trip (23-30 Jun)",
       "employee": "Sang Yoo",
       "destination": "Abroad (해외)",
-      "start_date": "2026-06-22",
-      "end_date": "2026-06-26",
+      "start_date": "2026-06-23",
+      "end_date": "2026-06-30",
       "purpose": "SOURCING",
       "status": "COMPLETED",
       "cost_planned": 0,
@@ -72985,6 +72986,27 @@
       "outcome": "방문 예정 호텔 21곳 · 결과보고 대기",
       "roi": null,
       "notes": "숙박: Avatar Da Nang Hotel 976,389 × 2박 + 식비 130k × 7끼"
+    },
+    {
+      "id": 33,
+      "title": "Abroad Biz Trip (29 Jun-02 Jul)",
+      "employee": "Park ChangBae (Aiden)",
+      "destination": "Abroad (해외)",
+      "start_date": "2026-06-29",
+      "end_date": "2026-07-02",
+      "purpose": "Abroad Business Trip",
+      "status": "COMPLETED",
+      "cost_planned": 0,
+      "cost_actual": 0,
+      "currency": "VND",
+      "partners": [],
+      "itinerary": [],
+      "hotels": [],
+      "expense_vnd": null,
+      "source_file": "manual",
+      "outcome": "",
+      "roi": null,
+      "notes": ""
     }
   ],
   "leaves": [
