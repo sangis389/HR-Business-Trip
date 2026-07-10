@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v42";  // v42: Nhi 7/13 AL 추가 + 트립 기간 중복 AL 정리
+const STORAGE_KEY = "vn-office-v43";  // v43: Monti · MiA 7월 AL 반영 (6건)
 const PAGE_SIZE = 50;
 
 // ==========================================================================

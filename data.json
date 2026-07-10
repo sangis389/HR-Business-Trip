@@ -1,6 +1,6 @@
 {
   "meta": {
-    "version": "v42",
+    "version": "v43",
     "scheduled_start": "08:15",
     "generated_at": "2026-07-07T10:39:13.664896",
     "total_employees": 45,
@@ -8,7 +8,7 @@
     "total_attendance": 4495,
     "late_count": 91,
     "absent_count": 651,
-    "updated": "2026-07-08T10:10:00Z"
+    "updated": "2026-07-08T10:30:00Z"
   },
   "employees": [
     {
@@ -204,8 +204,8 @@
       "is_scm": false,
       "id": 15,
       "annual_leave": 12.0,
-      "remaining_leave": 11.0,
-      "used_leave": 1.0,
+      "remaining_leave": 7.0,
+      "used_leave": 5.0,
       "leave_baseline_date": "2026-06-30"
     },
     {
@@ -496,8 +496,8 @@
       "is_scm": false,
       "id": 37,
       "annual_leave": 12.0,
-      "remaining_leave": 3.0,
-      "used_leave": 9.0,
+      "remaining_leave": 5.0,
+      "used_leave": 7.0,
       "leave_baseline_date": "2026-06-30"
     },
     {
@@ -61466,6 +61466,72 @@
       "person_id": "10000071",
       "name": "Ha Hoang Yen Nhi (Nhi)",
       "date": "2026-07-13",
+      "type": "AL",
+      "days": 1.0,
+      "status": "APPROVED",
+      "note": "수기 입력",
+      "auto": false
+    },
+    {
+      "id": "al-10000091-2026-07-06",
+      "person_id": "10000091",
+      "name": "Nguyen Ho Hao Vy (Monti)",
+      "date": "2026-07-06",
+      "type": "AL",
+      "days": 1.0,
+      "status": "APPROVED",
+      "note": "수기 입력",
+      "auto": false
+    },
+    {
+      "id": "al-10000091-2026-07-07",
+      "person_id": "10000091",
+      "name": "Nguyen Ho Hao Vy (Monti)",
+      "date": "2026-07-07",
+      "type": "AL",
+      "days": 1.0,
+      "status": "APPROVED",
+      "note": "수기 입력",
+      "auto": false
+    },
+    {
+      "id": "al-00000044-2026-07-27",
+      "person_id": "00000044",
+      "name": "Tran Thi Thanh Nhan (MiA-Accounting)",
+      "date": "2026-07-27",
+      "type": "AL",
+      "days": 1.0,
+      "status": "APPROVED",
+      "note": "수기 입력",
+      "auto": false
+    },
+    {
+      "id": "al-00000044-2026-07-28",
+      "person_id": "00000044",
+      "name": "Tran Thi Thanh Nhan (MiA-Accounting)",
+      "date": "2026-07-28",
+      "type": "AL",
+      "days": 1.0,
+      "status": "APPROVED",
+      "note": "수기 입력",
+      "auto": false
+    },
+    {
+      "id": "al-00000044-2026-07-29",
+      "person_id": "00000044",
+      "name": "Tran Thi Thanh Nhan (MiA-Accounting)",
+      "date": "2026-07-29",
+      "type": "AL",
+      "days": 1.0,
+      "status": "APPROVED",
+      "note": "수기 입력",
+      "auto": false
+    },
+    {
+      "id": "al-00000044-2026-07-30",
+      "person_id": "00000044",
+      "name": "Tran Thi Thanh Nhan (MiA-Accounting)",
+      "date": "2026-07-30",
       "type": "AL",
       "days": 1.0,
       "status": "APPROVED",
