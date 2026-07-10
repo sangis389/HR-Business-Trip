@@ -2,7 +2,7 @@
  * VN Office 인사·출장 관리 · Application Logic
  * ========================================================================== */
 
-const STORAGE_KEY = "vn-office-v44";  // v44: Mike Da Nang 계획서 추가 (7/28-30, 방문 예정 21곳)
+const STORAGE_KEY = "vn-office-v45";  // v45: HR 위젯 - 연차 예측 · 지각률 트렌드 · 인원 공백 · 사유 입력
 const PAGE_SIZE = 50;
 
 // ==========================================================================
@@ -767,6 +767,199 @@ function render() {
 // ==========================================================================
 // View: Overview
 // ==========================================================================
+// ==========================================================================
+// HR 위젯: 연차 예측 · 지각률 트렌드 · 인원 공백 (Step 4/5/6)
+// ==========================================================================
+function renderHRWidgets(thisMonth) {
+  // --- Step 4: 연차 소진 예측 ---
+  // 현시점 부여/사용/잔여 + 연말까지 남은 월 × 예상 사용률 → 미소진/초과 위험
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1; // 1-12
+  const monthsRemaining = 12 - currentMonth; // 12월 기준
+  const forecast = state.employees.map(e => {
+    const annual = e.annual_leave || 0;
+    const used = e.used_leave || 0;
+    const remaining = e.remaining_leave || 0;
+    // 예상 월평균 사용 = used / passed months (최소 1)
+    const monthlyUsage = used / Math.max(1, currentMonth);
+    const projected_use = monthlyUsage * monthsRemaining;
+    const yearEndRemaining = remaining - projected_use;
+    const utilRate = annual > 0 ? (used / annual * 100) : 0;
+    return { e, annual, used, remaining, yearEndRemaining, utilRate, monthsRemaining };
+  });
+  const underUse = forecast.filter(f => f.yearEndRemaining >= 5).sort((a,b) => b.yearEndRemaining - a.yearEndRemaining);
+  const overUse = forecast.filter(f => f.remaining <= 0 && f.annual > 0);
+  const deptUtil = {};
+  forecast.forEach(f => {
+    const d = f.e.department;
+    if (!d) return;
+    if (!deptUtil[d]) deptUtil[d] = { used: 0, annual: 0, count: 0 };
+    deptUtil[d].used += f.used;
+    deptUtil[d].annual += f.annual;
+    deptUtil[d].count += 1;
+  });
+
+  // --- Step 5: 부서별 지각률 월별 트렌드 ---
+  const allMonths = [...new Set(state.attendance.map(a => (a.date || "").slice(0,7)).filter(Boolean))].sort();
+  const depts = [...new Set(state.employees.map(e => e.department).filter(Boolean))].sort();
+  const trend = {}; // dept → { month: {total, late} }
+  depts.forEach(d => { trend[d] = {}; allMonths.forEach(m => trend[d][m] = { total: 0, late: 0 }); });
+  state.attendance.forEach(a => {
+    const m = (a.date || "").slice(0,7);
+    if (!m || !trend[a.department] || !trend[a.department][m]) return;
+    trend[a.department][m].total += 1;
+    if (a.status === "LATE") trend[a.department][m].late += 1;
+  });
+  const trendData = depts.map(d => {
+    const rates = allMonths.map(m => {
+      const t = trend[d][m];
+      return t.total > 0 ? (t.late / t.total * 100) : 0;
+    });
+    // 3개월 연속 상승 감지
+    let risingCount = 0;
+    for (let i = rates.length - 3; i >= 0; i--) {
+      if (rates[i] < rates[i+1] && rates[i+1] < rates[i+2]) risingCount++;
+      break;
+    }
+    return { dept: d, rates, latest: rates[rates.length-1] || 0, rising: risingCount > 0 };
+  }).sort((a,b) => b.latest - a.latest);
+  const maxRate = Math.max(1, ...trendData.flatMap(t => t.rates));
+
+  // --- Step 6: 이달 인원 공백 캘린더 ---
+  const [yearN, monthN] = thisMonth.split("-").map(Number);
+  const daysInMonth = new Date(yearN, monthN, 0).getDate();
+  const monthDays = Array.from({length: daysInMonth}, (_, i) => `${thisMonth}-${String(i+1).padStart(2,"0")}`);
+  const allLeaves = [...(state.leaves || []), ...autoGenerateBTLeaves()];
+  const dayAbsent = monthDays.map(dt => {
+    const dObj = new Date(dt);
+    const isWeekend = dObj.getDay() === 0 || dObj.getDay() === 6;
+    // count of employees on leave that day
+    const leaveCount = allLeaves.filter(l => l.date === dt && l.status === "APPROVED").length;
+    // count of ABSENT attendance without leave
+    const absentCount = state.attendance.filter(a => a.date === dt && a.status === "ABSENT").length;
+    const total = leaveCount + absentCount;
+    return { date: dt, day: dObj.getDate(), leaveCount, absentCount, total, isWeekend };
+  });
+  const cellColor = (total, isWeekend) => {
+    if (isWeekend) return { bg: "#f1f5f9", fg: "#94a3b8" };
+    if (total === 0) return { bg: "#dcfce7", fg: "#16a34a" };
+    if (total < 3) return { bg: "#fef3c7", fg: "#a16207" };
+    if (total < 5) return { bg: "#fed7aa", fg: "#c2410c" };
+    return { bg: "#fecaca", fg: "#b91c1c" }; // 5명↑ 위험
+  };
+
+  return `
+    <!-- Step 4: 연차 소진 예측 -->
+    <div class="card mt-3" style="background:#f0f9ff; border-color:#bfdbfe;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="margin:0; color:#1e40af;">📆 연차 소진 예측 (${monthsRemaining}개월 남음)</h3>
+        <span style="font-size:11px; color:#64748b;">현재 사용률 기반 연말 시뮬레이션</span>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:200px; padding:12px; border-radius:8px; background:#fff; border:1px solid #fef3c7;">
+          <div style="font-size:11px; color:#92400e; margin-bottom:6px;">⚠️ 연말 미소진 위험 (5일↑ 남을 예상)</div>
+          <div style="font-size:22px; font-weight:700; color:#a16207;">${underUse.length}명</div>
+          <div style="font-size:10px; color:#94a3b8; max-height:60px; overflow-y:auto; margin-top:4px;">
+            ${underUse.slice(0,8).map(f => `${escHTML(nickOnly(f.e.name))} (${f.yearEndRemaining.toFixed(1)}일)`).join(" · ") || "없음"}
+          </div>
+        </div>
+        <div style="flex:1; min-width:200px; padding:12px; border-radius:8px; background:#fff; border:1px solid #fecaca;">
+          <div style="font-size:11px; color:#b91c1c; margin-bottom:6px;">🚨 잔여 소진 완료 (추가 사용 시 초과)</div>
+          <div style="font-size:22px; font-weight:700; color:#dc2626;">${overUse.length}명</div>
+          <div style="font-size:10px; color:#94a3b8; max-height:60px; overflow-y:auto; margin-top:4px;">
+            ${overUse.slice(0,8).map(f => escHTML(nickOnly(f.e.name))).join(" · ") || "없음"}
+          </div>
+        </div>
+        <div style="flex:1; min-width:220px; padding:12px; border-radius:8px; background:#fff; border:1px solid #dbeafe;">
+          <div style="font-size:11px; color:#1e40af; margin-bottom:6px;">📊 부서별 연차 소진율</div>
+          <div style="max-height:110px; overflow-y:auto;">
+            ${Object.entries(deptUtil).sort((a,b) => (b[1].used/b[1].annual) - (a[1].used/a[1].annual)).map(([d, s]) => {
+              const rate = s.annual > 0 ? Math.round(s.used / s.annual * 100) : 0;
+              const color = rate < 30 ? "#dc2626" : rate < 50 ? "#f59e0b" : "#16a34a";
+              return `
+                <div style="display:flex; align-items:center; gap:6px; margin:3px 0; font-size:11px;">
+                  <div style="width:80px; color:#475569;">${escHTML(d.replace("Office/",""))}</div>
+                  <div style="flex:1; height:12px; background:#f1f5f9; border-radius:3px; overflow:hidden;">
+                    <div style="width:${rate}%; height:100%; background:${color};"></div>
+                  </div>
+                  <div style="width:32px; text-align:right; color:${color}; font-weight:600;">${rate}%</div>
+                </div>`;
+            }).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5: 부서별 지각률 트렌드 -->
+    <div class="card mt-3">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">📈 부서별 지각률 트렌드 (월별)</h3>
+        <span style="font-size:11px; color:#64748b;">3개월 연속 상승 → ⚠️ 표시</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:11px; min-width:600px;">
+          <thead>
+            <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+              <th style="text-align:left; padding:6px 10px;">부서</th>
+              ${allMonths.map(m => `<th style="padding:6px 4px; text-align:center; min-width:56px;">${m.slice(5)}월</th>`).join("")}
+              <th style="padding:6px 10px; text-align:center; background:#eff6ff;">최근</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${trendData.map(t => `
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:6px 10px; font-weight:600;">${escHTML(t.dept)} ${t.rising ? '<span style="color:#dc2626;">⚠️ 상승</span>' : ''}</td>
+                ${t.rates.map(r => {
+                  const pct = r.toFixed(0);
+                  const color = r >= 15 ? "#dc2626" : r >= 10 ? "#f59e0b" : r >= 5 ? "#3b82f6" : "#16a34a";
+                  const barH = maxRate > 0 ? Math.max(2, (r / maxRate) * 20) : 2;
+                  return `<td style="padding:4px 4px; text-align:center;">
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                      <div style="width:100%; height:24px; display:flex; align-items:flex-end; justify-content:center;">
+                        <div style="width:16px; height:${barH}px; background:${color}; border-radius:2px;"></div>
+                      </div>
+                      <div style="font-size:9px; color:${color}; margin-top:2px;">${pct}%</div>
+                    </div>
+                  </td>`;
+                }).join("")}
+                <td style="padding:6px 10px; text-align:center; background:#eff6ff; font-weight:700; color:${t.latest >= 15 ? '#dc2626' : t.latest >= 10 ? '#f59e0b' : '#0f172a'};">${t.latest.toFixed(1)}%</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Step 6: 이달 인원 공백 캘린더 -->
+    <div class="card mt-3">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">📅 ${thisMonth} 인원 공백 현황</h3>
+        <div style="display:flex; gap:6px; font-size:10px;">
+          <span style="padding:1px 6px; border-radius:3px; background:#dcfce7; color:#16a34a;">정상</span>
+          <span style="padding:1px 6px; border-radius:3px; background:#fef3c7; color:#a16207;">1-2명</span>
+          <span style="padding:1px 6px; border-radius:3px; background:#fed7aa; color:#c2410c;">3-4명</span>
+          <span style="padding:1px 6px; border-radius:3px; background:#fecaca; color:#b91c1c;">⚠️ 5명↑</span>
+          <span style="padding:1px 6px; border-radius:3px; background:#f1f5f9; color:#94a3b8;">주말</span>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(50px, 1fr)); gap:4px;">
+        ${dayAbsent.map(d => {
+          const c = cellColor(d.total, d.isWeekend);
+          const dObj = new Date(d.date);
+          const dowLabel = ["일","월","화","수","목","금","토"][dObj.getDay()];
+          return `<div style="background:${c.bg}; color:${c.fg}; padding:6px 4px; border-radius:6px; text-align:center; cursor:pointer;" title="${d.date} (${dowLabel}) · 결근 ${d.absentCount} · 연차/BT ${d.leaveCount} · 총 ${d.total}명 부재">
+            <div style="font-size:9px; opacity:0.7;">${dowLabel}</div>
+            <div style="font-size:14px; font-weight:700;">${d.day}</div>
+            <div style="font-size:10px; font-weight:600;">${d.isWeekend ? '·' : (d.total > 0 ? `${d.total}명` : '○')}</div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div style="margin-top:8px; font-size:11px; color:#64748b;">
+        💡 결근·연차·BT 모두 합산. 특정 날 5명 이상 부재 시 업무 공백 리스크 알림.
+      </div>
+    </div>
+  `;
+}
+
 function viewOverview() {
   const today = new Date().toISOString().slice(0, 10);
   const thisMonth = today.slice(0, 7);
@@ -801,6 +994,8 @@ function viewOverview() {
     .sort((a,b) => b.totalDeptLate - a.totalDeptLate);
 
   return `
+    ${renderHRWidgets(thisMonth)}
+
     <div class="kpi-grid">
       ${kpi("VN 총 인원", state.employees.length, "명", "primary")}
       ${kpi("SCM 인원", scm, "명", "scm")}
@@ -1326,6 +1521,40 @@ function renderDeptMonthSummary() {
   `;
 }
 
+// 근태 사유/코멘트 편집 모달
+function editAttReason(attId) {
+  const a = state.attendance.find(x => x.id === attId);
+  if (!a) return;
+  const commonReasons = ["교통 지연", "몸살/감기", "가족 사정", "병원 방문", "네트워크/재택 이슈", "기상 악화", "기타"];
+  showModal(`근태 사유 · 확인 · ${a.date} · ${nickOnly(a.name)}`, `
+    <div style="margin-bottom:12px;">
+      <div class="field-label">근태 상태</div>
+      <div><span class="badge b-${a.status === "LATE" ? "warn" : "danger"}" style="font-size:12px; padding:4px 10px;">${a.status}${a.late_minutes ? ` · ${a.late_minutes}분` : ''}</span></div>
+    </div>
+    <div><label class="field-label">사유 (자유 입력 또는 아래 선택)</label>
+      <input id="ar_reason" value="${escHTML(a.reason || '')}" placeholder="예: 교통 지연, 병원 방문 등" />
+    </div>
+    <div class="chips" style="margin-top:6px;">
+      ${commonReasons.map(r => `<button class="chip" type="button" onclick="document.getElementById('ar_reason').value='${escHTML(r)}'">${escHTML(r)}</button>`).join("")}
+    </div>
+    <div style="margin-top:12px;"><label class="field-label">부서장/법인장 리뷰 코멘트</label>
+      <input id="ar_comment" value="${escHTML(a.reviewer_comment || '')}" placeholder="예: 확인함 · 재발 방지 요청" />
+    </div>
+    <div style="margin-top:12px;">
+      <label style="display:flex; align-items:center; gap:6px; font-size:13px;">
+        <input type="checkbox" id="ar_verified" ${a.reason_verified ? 'checked' : ''} />
+        <span>✅ 사유 확인 완료 (부서장 승인)</span>
+      </label>
+    </div>
+  `, () => {
+    a.reason = val("ar_reason");
+    a.reviewer_comment = val("ar_comment");
+    a.reason_verified = document.getElementById("ar_verified").checked;
+    save(); render();
+    return true;
+  });
+}
+
 // Drill-down helpers
 function drillToDetail(pid, month) {
   const emp = state.employees.find(e => e.person_id === pid);
@@ -1410,7 +1639,7 @@ function renderAttendanceDetailInner() {
       <div class="table-wrap"><table>
         <thead><tr>
           <th>날짜</th><th>이름</th><th>부서</th><th>출근</th><th>퇴근</th>
-          <th class="right">지각(분)</th><th>상태 / 휴가</th>
+          <th class="right">지각(분)</th><th>상태 / 휴가</th><th>사유·코멘트</th>
         </tr></thead>
         <tbody>
           ${paginated.map(a => {
@@ -1422,6 +1651,11 @@ function renderAttendanceDetailInner() {
             } else {
               statusHtml = `<span class="badge b-${a.status === "LATE" ? "warn" : a.status === "ABSENT" ? "danger" : "success"}">${a.status}</span>`;
             }
+            const editable = (a.status === "LATE" || a.status === "ABSENT") && !leaveMatched;
+            const hasReason = (a.reason || a.reviewer_comment);
+            const reasonBtnHtml = editable
+              ? `<button class="btn btn-outline btn-sm" style="font-size:11px; padding:2px 8px;" onclick="editAttReason(${a.id})">${hasReason ? '✏️ ' + escHTML((a.reason||'').slice(0,15)) : '➕ 사유 입력'}${a.reason_verified ? ' ✅' : ''}</button>`
+              : `<span style="font-size:11px; color:#94a3b8;">${escHTML(a.reason || "—")}</span>`;
             return `
               <tr>
                 <td>${a.date}</td>
@@ -1433,6 +1667,7 @@ function renderAttendanceDetailInner() {
                 <td>${a.check_out || "—"}</td>
                 <td class="right ${a.late_minutes > 0 ? "text-late" : ""}">${a.late_minutes || "—"}</td>
                 <td>${statusHtml}</td>
+                <td>${reasonBtnHtml}</td>
               </tr>`;
           }).join("")}
         </tbody>
@@ -2235,27 +2470,18 @@ function viewCalendar() {
     const months = [...new Set(state.attendance.map(a => (a.date || "").slice(0,7)).filter(Boolean))].sort();
     state.cal_month = months[months.length - 1] || "2026-06";
   }
-  if (!state.cal_scope || state.cal_scope === "SCM") state.cal_scope = "ALL"; // ALL | 부서명 (예: Office/SCM)
+  if (!state.cal_scope || state.cal_scope === "SCM") state.cal_scope = "ALL";
 
   const [yStr, mStr] = state.cal_month.split("-");
   const year = parseInt(yStr), month = parseInt(mStr);
   const daysInMonth = new Date(year, month, 0).getDate();
   const days = Array.from({length: daysInMonth}, (_, i) => `${state.cal_month}-${String(i+1).padStart(2,"0")}`);
-
-  // 월 목록
   const allMonths = [...new Set([...state.attendance.map(a => (a.date || "").slice(0,7)), ...state.trips.map(t => (t.start_date || "").slice(0,7))].filter(Boolean))].sort();
-
-  // 부서 목록 (자동 추출)
   const allDepts = [...new Set(state.employees.map(e => e.department).filter(Boolean))].sort();
 
-  // 담당자 리스트
   let emps;
-  if (state.cal_scope === "ALL") {
-    emps = state.employees.slice();
-  } else {
-    // 특정 부서
-    emps = state.employees.filter(e => e.department === state.cal_scope);
-  }
+  if (state.cal_scope === "ALL") emps = state.employees.slice();
+  else emps = state.employees.filter(e => e.department === state.cal_scope);
   emps.sort((a,b) => {
     const aHead = a.position === "SCM Head" ? 1 : 0;
     const bHead = b.position === "SCM Head" ? 1 : 0;
@@ -2263,7 +2489,6 @@ function viewCalendar() {
     return (a.name || "").localeCompare(b.name || "");
   });
 
-  // Leave 데이터 (auto BT 포함)
   const allLeaves = [...(state.leaves || []), ...autoGenerateBTLeaves()];
   const leaveMap = {};
   allLeaves.filter(l => l.status === "APPROVED").forEach(l => {
@@ -2271,19 +2496,14 @@ function viewCalendar() {
     if (!leaveMap[key] || leaveInfo(l.type).deduct_annual) leaveMap[key] = l;
   });
 
-  // 근태 lookup
   const attMap = {};
-  state.attendance.forEach(a => {
-    attMap[`${a.person_id}|${a.date}`] = a;
-  });
+  state.attendance.forEach(a => { attMap[`${a.person_id}|${a.date}`] = a; });
 
-  // 요일 배열 (0=일, 6=토)
   const dow = ["일","월","화","수","목","금","토"];
   const isWeekend = (dateStr) => {
     const d = new Date(dateStr);
     return d.getDay() === 0 || d.getDay() === 6;
   };
-
   const cellStyle = (emp, date) => {
     const leave = leaveMap[`${emp.person_id}|${date}`];
     const att = attMap[`${emp.person_id}|${date}`];
@@ -2298,7 +2518,6 @@ function viewCalendar() {
     if (att.status === "ABSENT") return { bg: "#dc2626", fg: "#fff", label: "A", title: "결근" };
     return { bg: "#dcfce7", fg: "#16a34a", label: "○", title: "정상 출근" };
   };
-
   const empSummary = (emp) => {
     let normalD = 0, lateD = 0, absentD = 0;
     const byType = {};
@@ -2319,7 +2538,6 @@ function viewCalendar() {
     <div class="flex center gap-3 wrap">
       <h2 style="margin:0; font-size:16px;">📅 통합 캘린더 <span style="color:#94a3b8; font-size:13px;">담당자별 근무 · 출장 · 연차 통합 뷰</span></h2>
     </div>
-
     <div class="card mt-3">
       <div style="display:flex; gap:12px; flex-wrap:wrap;">
         <div style="flex:1; min-width:180px;">
@@ -2342,12 +2560,9 @@ function viewCalendar() {
         <span style="padding:2px 8px; border-radius:4px; background:#dc2626; color:#fff;">A 결근</span>
         <span style="padding:2px 8px; border-radius:4px; background:#3b82f6; color:#fff;">AL 연차</span>
         <span style="padding:2px 8px; border-radius:4px; background:#f59e0b; color:#fff;">BT 출장</span>
-        <span style="padding:2px 8px; border-radius:4px; background:#dc2626; color:#fff;">SL 병가</span>
-        <span style="padding:2px 8px; border-radius:4px; background:#94a3b8; color:#fff;">UP 무급</span>
         <span style="padding:2px 8px; border-radius:4px; background:#f1f5f9; color:#94a3b8;">· 주말</span>
       </div>
     </div>
-
     <div class="card mt-3" style="padding:0; overflow:auto;">
       <table style="border-collapse:collapse; font-size:10px; width:100%; min-width:900px;">
         <thead>
@@ -2388,7 +2603,6 @@ function viewCalendar() {
                   ${summ.lateD > 0 ? `<div style="color:#f59e0b;">지각 ${summ.lateD}</div>` : ""}
                   ${summ.absentD > 0 ? `<div style="color:#dc2626;">결근 ${summ.absentD}</div>` : ""}
                   ${summ.byType["AL"] > 0 ? `<div style="color:#3b82f6;">AL ${summ.byType["AL"]}</div>` : ""}
-                  ${summ.byType["AL/2"] > 0 ? `<div style="color:#60a5fa;">AL/2 ${summ.byType["AL/2"]}</div>` : ""}
                   ${summ.byType["BT"] > 0 ? `<div style="color:#f59e0b;">BT ${summ.byType["BT"]}</div>` : ""}
                 </td>
               </tr>`;
@@ -2396,15 +2610,11 @@ function viewCalendar() {
         </tbody>
       </table>
     </div>
-
-    <div style="font-size:11px; color:#64748b; margin-top:10px;">
-      💡 셀에 마우스를 올리면 상세 정보 (날짜 · 상태 · 지각 분 · 트립 목적지 등) 확인 가능. BT(출장) 은 SCM 트립 데이터에서 자동 반영됩니다.
-    </div>
   `;
 }
 
 function viewReports() {
-  const monthly = ["2026-03","2026-04","2026-05","2026-06"].map(m => ({
+  const monthly = ["2026-03","2026-04","2026-05","2026-06","2026-07"].map(m => ({
     m,
     late: state.attendance.filter(a => a.date && a.date.startsWith(m) && a.status === "LATE").length,
     absent: state.attendance.filter(a => a.date && a.date.startsWith(m) && a.status === "ABSENT").length,
@@ -2418,32 +2628,19 @@ function viewReports() {
     if (a.status === "LATE") deptStats[a.department].late++;
     if (a.status === "ABSENT") deptStats[a.department].absent++;
   });
-  const attStatus = {};
-  state.attendance.forEach(a => { attStatus[a.status] = (attStatus[a.status] || 0) + 1; });
-  const attTotal = state.attendance.length;
-  const tripStatus = {};
-  state.trips.forEach(t => { tripStatus[t.status] = (tripStatus[t.status] || 0) + 1; });
-  const tripTotal = state.trips.length;
-  const deptEmp = {};
-  state.employees.forEach(e => { deptEmp[e.department] = (deptEmp[e.department] || 0) + 1; });
   return `
     <div class="flex center gap-3"><h2 style="margin:0; font-size:16px;">리포트</h2></div>
-    <div class="grid-2 mt-4">
-      <div class="card"><h3>월별 지각/결근</h3>
-        <div style="padding:12px;">${monthly.map(m => `
-          <div style="margin-bottom:10px;">
-            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;"><b>${m.m}</b><span style="color:#94a3b8;">지각 ${m.late} · 결근 ${m.absent}</span></div>
-            <div style="display:flex; gap:2px; height:16px;">
-              <div style="flex:${m.late}; background:#f59e0b; border-radius:2px;"></div>
-              <div style="flex:${m.absent}; background:#ef4444; border-radius:2px;"></div>
-              <div style="flex:${Math.max(0, monthlyMax - m.late - m.absent)}; background:#f1f5f9;"></div>
-            </div>
-          </div>`).join("")}
-        </div>
+    <div class="card mt-4"><h3>월별 지각/결근</h3>
+      <div style="padding:12px;">${monthly.map(m => `
+        <div style="margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:2px;"><b>${m.m}</b><span style="color:#94a3b8;">지각 ${m.late} · 결근 ${m.absent}</span></div>
+          <div style="display:flex; gap:2px; height:16px;">
+            <div style="flex:${m.late}; background:#f59e0b; border-radius:2px;"></div>
+            <div style="flex:${m.absent}; background:#ef4444; border-radius:2px;"></div>
+            <div style="flex:${Math.max(0, monthlyMax - m.late - m.absent)}; background:#f1f5f9;"></div>
+          </div>
+        </div>`).join("")}
       </div>
-      <div class="card"><h3>근태 상태 분포</h3>${doughnut(attStatus, attTotal, { NORMAL: "#22c55e", PRESENT: "#22c55e", LATE: "#f59e0b", ABSENT: "#ef4444", LEAVE: "#3b82f6", HOLIDAY: "#94a3b8" })}</div>
-      <div class="card"><h3>부서별 인원</h3>${doughnut(deptEmp, state.employees.length, { "Office/SCM": "#4f46e5", "Office/PD": "#7c3aed", "KR Manager": "#0ea5e9", "Office": "#94a3b8" })}</div>
-      <div class="card"><h3>SCM 출장 상태</h3>${doughnut(tripStatus, tripTotal, { DRAFT: "#94a3b8", REQUESTED: "#f59e0b", APPROVED: "#3b82f6", IN_PROGRESS: "#22c55e", COMPLETED: "#0ea5e9", CANCELLED: "#ef4444" })}</div>
     </div>
     <div class="card mt-4"><h3>부서별 근태 요약</h3>
       <div class="table-wrap"><table>
